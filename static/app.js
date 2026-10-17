@@ -30,7 +30,7 @@ const pointsRenderer = L.canvas({ padding: 0.5 });
 const DEMO = {
   origin: [37.8701, -122.2681],  // Downtown Berkeley BART
   dest: [37.8669, -122.2560],    // Unit 3 residence halls
-  profile: "I walk alone, I prefer busy streets even if it's longer",
+  profile: "I walk alone at night, I'd rather avoid parks and dark paths",
   time: "23:00",
 };
 const FACTOR_LABELS = {
@@ -167,7 +167,8 @@ function renderResults(r, rerouted) {
     const fast = r.fast.factors[i];
     const row = document.createElement("div");
     row.className = "factor";
-    const top = '<div class="top"><span>' + (FACTOR_LABELS[f.name] || f.name) + "</span><span>data on " +
+    const top = '<div class="top"><span>' + (FACTOR_LABELS[f.name] || f.name) +
+      (f.simulated ? ' <em class="sim">simulated</em>' : "") + "</span><span>data on " +
       Math.round(f.coverage * 100) + "% of route · reliability " + f.reliability + "</span></div>";
     if (f.risk === null && (!fast || fast.risk === null)) {
       row.innerHTML = top + '<div class="nodata">No data on these routes — not counted as risk</div>';
@@ -245,7 +246,13 @@ async function loadLayers() {
   try {
     const d = await api("/layers");
     if (d.parks) {
-      layerControl.addOverlay(L.geoJSON(d.parks, { style: { color: "#22c55e", weight: 1, fillOpacity: 0.18 } }).addTo(map), "Parks & woods");
+      layerControl.addOverlay(L.geoJSON(d.parks, { style: { color: "#22c55e", weight: 1, fillOpacity: 0.18 } }).addTo(map), "Parks & campus woods");
+    }
+    if (d.reports && d.reports.length) {
+      const reports = L.layerGroup(d.reports.map(function (g) {
+        return L.polyline(g, { color: "#f87171", weight: 4, opacity: 0.7, lineCap: "round" });
+      }));
+      layerControl.addOverlay(reports, "Community reports (simulated) (" + d.reports.length + ")");
     }
     const styles = {
       lamp: ["Street lamps", "#fbbf24", 2, false],

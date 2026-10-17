@@ -120,7 +120,7 @@ def route_summary(G, path, weights: dict, night: bool, penalties: dict, lam: flo
     """{length_m, duration_min, score (0-10), confidence, factors: [{name, risk, coverage, reliability}],
     coverage_warning, streets}. Scores are length-weighted over the edges of the route."""
     risks = compute_risks(G, weights, night)
-    total = risk_sum = conf_sum = 0.0
+    total = risk_sum = conf_sum = park_len = 0.0
     known_len = {f: 0.0 for f in RELIABILITY}
     factor_sum = {f: 0.0 for f in RELIABILITY}
     streets = []
@@ -131,6 +131,8 @@ def route_summary(G, path, weights: dict, night: bool, penalties: dict, lam: flo
         total += length
         risk_sum += length * min(1.0, risk + penalties.get(pair_key(u, v), 0.0))
         conf_sum += length * meta["confidence"]
+        if (d.get("features") or {}).get("in_park"):
+            park_len += length
         for f, r in meta["factor_risks"].items():
             if r is not None:
                 known_len[f] += length
@@ -139,12 +141,14 @@ def route_summary(G, path, weights: dict, night: bool, penalties: dict, lam: flo
             streets.append(d["name"])
 
     total = max(total, 1e-9)
+    simulated = set(G.graph.get("meta", {}).get("simulated_factors", []))
     factors = [
         {
             "name": f,
             "risk": round(factor_sum[f] / known_len[f], 2) if known_len[f] else None,
             "coverage": round(known_len[f] / total, 2),
             "reliability": RELIABILITY[f],
+            "simulated": f in simulated,
         }
         for f in RELIABILITY
     ]
@@ -154,6 +158,7 @@ def route_summary(G, path, weights: dict, night: bool, penalties: dict, lam: flo
         "duration_min": round(total / WALK_M_PER_MIN),
         "score": round(10 * (1 - risk_sum / total), 1),
         "confidence": round(conf_sum / total, 2),
+        "park_m": round(park_len),  # meters through parks / campus woods
         "factors": factors,
         "coverage_warning": f"Little or no data on this route for: {', '.join(missing)}" if missing else None,
         "streets": streets,

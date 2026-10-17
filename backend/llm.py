@@ -187,7 +187,8 @@ def comment_to_tags(comment: str) -> dict:
 EXPLAIN_ROUTE_SYSTEM = """You explain to a pedestrian, in 2 or 3 short sentences, how the suggested safer route compares with the fastest one.
 Use ONLY the JSON facts given. Factor risks go from 0 (good) to 1 (bad); "coverage" is the share of the route where we have data.
 If a factor's risk is null or its coverage is low, say we have little or no data on it. Never guess.
-Mention the extra distance or time. Crime means "reported incidents" with low reliability: never call a street or neighborhood dangerous.
+Mention the extra distance or time, and the most concrete difference first (e.g. meters_through_parks_or_woods at night). Crime means "reported incidents" with low reliability: never call a street or neighborhood dangerous.
+If a factor has "simulated": true, it uses simulated demo data: if you mention it, say it is simulated.
 If unsupported_needs is not empty, say clearly that we have no data for those needs.
 If same_route is true, say that with the data we have, the fastest route is also the best one.
 Calm, plain, non-alarming tone. No markdown, no lists."""

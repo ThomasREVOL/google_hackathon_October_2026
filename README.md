@@ -9,7 +9,7 @@ Google DeepMind hackathon @ UC Berkeley, October 2026 — *"The Human Side of Bu
 - **📋 Team status:** [TODO.md](TODO.md) · **🧠 Judgment log:** [DECISIONS.md](DECISIONS.md) · **📐 Spec and contracts:** [SPEC.md](SPEC.md)
 
 ## The problem
-A student gets off BART at Downtown Berkeley at 11 pm to walk back to the Unit 3 residence halls. The fastest route sends her about 400 m through the Grinnell Natural Area and campus woods in the dark. Staying on streets is only about 35 m longer.
+A student gets off BART at Downtown Berkeley at 11 pm to walk back to the Unit 3 residence halls. The fastest route (1,495 m) sends her 426 m through the Grinnell Natural Area and campus woods in the dark. Our safer route avoids them entirely for only 50 m more — and by day, the app happily takes the shortcut.
 
 ## Why AI alone is not enough
 - **Our algorithm** (A* on a weighted street graph) computes routes and scores. It is rule-based and explainable.
@@ -34,7 +34,7 @@ A student gets off BART at Downtown Berkeley at 11 pm to walk back to the Unit 3
 | Lighting | OpenStreetMap `lit` tag (7.5 % of segments) and 78 street lamps | 0.7 |
 | Lively streets | OpenStreetMap venues open at 23:00 (`opening_hours` parsed) | 0.6 |
 | Help points | OpenStreetMap police, hospitals, pharmacies, fire stations (156) | 0.9 |
-| Parks and campus woods | OpenStreetMap `leisure=park` (57 polygons); campus woods (`natural=wood`) to add | 0.9 |
+| Parks and campus woods | OpenStreetMap `leisure=park` (57 polygons) + `natural=wood` and similar (75 polygons, incl. the Grinnell Natural Area) | 0.9 |
 | User reports | This app; 150 **simulated** demo reports in `data/processed/user_reports.csv` | grows with the number of reports |
 
 Full data-layer documentation: [data/clean/README.md](data/clean/README.md), [scripts/data_sources.md](scripts/data_sources.md).

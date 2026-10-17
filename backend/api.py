@@ -15,6 +15,21 @@ ROOT = Path(__file__).resolve().parent.parent
 # Human penalties per street segment (routing.pair_key -> [0, 1]), raised by /report. In memory: reset on restart.
 PENALTIES = {}
 REPORT_STEP = 0.4  # penalty added per report, times severity
+SEED_STEP = 0.1  # per SIMULATED past community report (data/processed/user_reports.csv, via graph.pkl)
+_seeded = False
+
+
+def get_graph():
+    """Load the graph once and seed PENALTIES with the simulated past community reports."""
+    global _seeded
+    G = graph.load_graph()
+    if not _seeded:
+        for u, v, k, d in G.edges(keys=True, data=True):
+            if d.get("seed_reports"):
+                key = routing.pair_key(u, v)
+                PENALTIES[key] = max(PENALTIES.get(key, 0.0), min(1.0, SEED_STEP * d["seed_reports"]))
+        _seeded = True
+    return G
 
 app = FastAPI(title="Safe route home")
 
@@ -65,7 +80,9 @@ def route_facts(summary: dict) -> dict:
         "duration_min": summary["duration_min"],
         "score": summary["score"],
         "confidence": summary["confidence"],
-        "factors": {f["name"]: {"risk": f["risk"], "coverage": f["coverage"]} for f in summary["factors"]},
+        "meters_through_parks_or_woods": summary["park_m"],
+        "factors": {f["name"]: {"risk": f["risk"], "coverage": f["coverage"], "simulated": f["simulated"]}
+                    for f in summary["factors"]},
         "streets": summary["streets"][:6],
     }
 
@@ -82,7 +99,7 @@ MAX_POINTS = 4000
 
 @app.get("/layers")
 def layers():
-    out = {"points": {k: [] for k in LAYER_KINDS}, "parks": None}
+    out = {"points": {k: [] for k in LAYER_KINDS}, "parks": None, "reports": []}
     clean = ROOT / "data" / "clean"
     if (clean / "points.csv").exists():
         with open(clean / "points.csv", newline="", encoding="utf-8") as f:
@@ -93,14 +110,25 @@ def layers():
                         pts.append([round(float(row["lat"]), 6), round(float(row["lon"]), 6)])
                     except (KeyError, TypeError, ValueError):
                         pass
-    if (clean / "parks.geojson").exists():
-        out["parks"] = json.loads((clean / "parks.geojson").read_text(encoding="utf-8"))
+    # Parks (OSM leisure=park) + campus woods (OSM natural=wood...) in one overlay
+    features = []
+    for name in ("parks.geojson", "woods.geojson"):
+        if (clean / name).exists():
+            features += json.loads((clean / name).read_text(encoding="utf-8"))["features"]
+    if features:
+        out["parks"] = {"type": "FeatureCollection", "features": features}
+    # Segments with SIMULATED past community reports (one per street, not per direction)
+    G, seen = get_graph(), set()
+    for u, v, k, d in G.edges(keys=True, data=True):
+        if d.get("seed_reports") and routing.pair_key(u, v) not in seen:
+            seen.add(routing.pair_key(u, v))
+            out["reports"].append(d["geometry"])
     return out
 
 
 @app.post("/route")
 def route(req: RouteRequest):
-    G = graph.load_graph()
+    G = get_graph()
     source, target = graph.nearest_node(*req.origin), graph.nearest_node(*req.dest)
     night = routing.is_night(req.time)
     profile = llm.profile_to_weights(req.profile_text)  # Gemini translates text -> weights; routing stays ours
@@ -134,7 +162,7 @@ def match(req: MatchRequest):
 
 @app.post("/report")
 def report(req: ReportRequest):
-    G = graph.load_graph()
+    G = get_graph()
     u, v, k = graph.nearest_edge(req.lat, req.lon)
     t = llm.comment_to_tags(req.comment)
     key = routing.pair_key(u, v)

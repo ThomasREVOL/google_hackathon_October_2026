@@ -4,7 +4,7 @@
 > Git : `git pull --rebase` avant de commencer et avant chaque push, `git add <tes fichiers>` uniquement, jamais `git add -A` (voir README → Team git workflow).
 > Repères : **T+40** point d'étape · **T+60** gel des fonctionnalités · **T+70** vidéo · **T+115** soumission
 
-**Dernière mise à jour :** données de l'équipier fusionnées (conflit README réglé, `.env` et `requirements.txt` réparés). Prochaine étape côté implémentation : `scripts/attach_features.py`. Décision d'équipe à prendre sur les données simulées.
+**Dernière mise à jour :** `attach_features.py` terminé, la démo marche avec les vraies données (le trajet sûr évite les 426 m de bois de nuit). Prochaines étapes : `/match` réel, test dans le navigateur, puis enregistrements d'écran.
 
 ## Toute l'équipe
 - [x] Idée, zone de démo (**Berkeley** : campus, Downtown, Southside, Northside), contrats dans [SPEC.md](SPEC.md)
@@ -23,10 +23,11 @@
 - [x] `backend/routing.py` : A* rapide / sûr, détour max 1,4×, `route_summary` (score, confiance, facteurs, couverture), `plan()` — environ 0,2 s puis 0,03 s grâce au cache
 - [x] `/route` branché sur le vrai graphe (explication = modèle de texte en attendant Gemini)
 - [x] `/report` → pénalité sur le segment le plus proche (dans les 2 sens), testé : le trajet sûr change
-- [ ] `scripts/attach_features.py` → `data/graph.pkl` : relier `data/processed/edges.parquet` à nos segments par `segment_id = u_v_key`, `help` et `crime` normalisés, `None` pour les sources absentes ou simulées (voir SPEC → Contract 2). **Prochaine étape**
+- [x] `scripts/attach_features.py` → `data/graph.pkl` (3,5 Mo) : 100 % des segments reliés aux données de l'équipier, bois du campus ajoutés (75 polygones → `data/clean/woods.geojson`), lampadaires/pannes à `None` quand il n'y en a pas, aide = points disponibles à 23 h (53), incidents simulés filtrés, 75 signalements simulés → pénalités de départ
+- [x] **Démo validée avec les données** : de nuit, le rapide passe 426 m dans les bois (score 6,8), le sûr les évite totalement pour +50 m (score 8,1) ; de jour, même trajet. Gemini l'explique (« avoids the 426 meters through parks and woods… »)
 - [x] `backend/llm.py` : `profile_to_weights`, `comment_to_tags`, `explain_route`, `explain_match`, chacune avec repli + cache disque (`data/llm_cache.json`) + modèle de secours. Modèle `gemini-flash-lite-latest` (environ 1 s), car `gemini-flash-latest` était surchargé
 - [x] Gemini branché dans `/route` (profil → poids + détour max, explication) et `/report` (étiquettes + gravité) : environ 1,8 s par trajet, testé
-- [ ] Régler `REPORT_STEP` (api.py) sur le scénario de démo : 1 signalement « sombre et vide » doit suffire à changer le trajet
+- [x] `REPORT_STEP` vérifié : 1 signalement « very dark and nobody around » (gravité 0,8) suffit à changer le trajet
 - [ ] Avant d'enregistrer : jouer le scénario de démo, puis commiter `data/llm_cache.json` (`git add data/llm_cache.json`). Ne pas le commiter avant, il change à chaque test
 - [ ] `/match` avec `data/mock_users.json` (utilisateurs déplacés à Downtown BART → Unit 3 / Southside)
 - [x] Fonds de carte : CARTO exige désormais une clé, remplacé par Esri Dark Gray (Night), OSM filtré en sombre (Night detailed), OSM (Light), Esri (Satellite), tous testés sans clé
@@ -38,8 +39,8 @@
 ## Données
 - [x] Couche de données poussée (PR #2) : `data/clean/` (78 lampadaires, 24 lieux ouverts à 23 h, 156 points d'aide, 57 parcs), `data/clean_rich/`, `data/processed/` (graph.graphml, edges.parquet par `segment_id`), pipeline `scripts/`
 - [x] Fusion réglée par l'implémentation : README réunifié, `.env` de nouveau ignoré par git, `requirements.txt` de l'app restauré (les bibliothèques de données sont passées dans `requirements-dev.txt`), notre script de graphe pour l'API renommé `scripts/build_app_graph.py`
-- [ ] ⚠️ **Décision d'équipe :** incidents (60) et pannes d'éclairage (15) sont **simulés**. Recommandation : les exclure du score (facteur « no data ») et le dire dans la vidéo, ou, à défaut, les afficher partout comme « simulated »
-- [ ] Ajouter les bois du campus (`natural=wood` : Grinnell Natural Area…) aux parcs : `parks.geojson` n'a que `leisure=park`, sans eux la démo ne montre pas le contournement
+- [x] **Décision d'équipe :** données simulées **gardées** et étiquetées « simulated » partout (badge sur le facteur, légende de la carte, Gemini, README)
+- [x] Bois du campus ajoutés (`data/clean/woods.geojson`, téléchargés par `attach_features.py`) et affichés avec les parcs sur la carte
 - [ ] Sources Berkeley trouvées : **noter le nom exact et le lien de chaque jeu de données** dans README → Data sources
 - [ ] OSM : lampadaires, lieux ouverts tard, points d'aide
 - [ ] Parcs et bois en polygones : `leisure=park|garden|nature_reserve`, **`natural=wood|scrub`**, `landuse=forest` (le Grinnell Natural Area et les bois du campus sont en `natural=wood`, et ce sont eux qui font la différence dans la démo)

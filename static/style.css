@@ -111,6 +111,10 @@ textarea { width: 100%; resize: vertical; margin-bottom: 10px; font-size: 0.9rem
 .bar.fast i { background: var(--fast); }
 .bar.safe i { background: var(--safe); box-shadow: 0 0 8px var(--safe); }
 .nodata { font-size: 0.75rem; color: var(--muted); font-style: italic; }
+.sim {
+  font-style: normal; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  color: #fb923c; border: 1px solid rgba(251, 146, 60, 0.5); border-radius: 6px; padding: 0 5px; margin-left: 4px;
+}
 
 .actions { display: flex; gap: 8px; margin-top: 16px; }
 
