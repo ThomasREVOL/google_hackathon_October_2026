@@ -4,7 +4,7 @@
 > Git : `git pull --rebase` avant de commencer et avant chaque push, `git add <tes fichiers>` uniquement, jamais `git add -A` (voir README → Team git workflow).
 > Repères : **T+40** point d'étape · **T+60** gel des fonctionnalités · **T+70** vidéo · **T+115** soumission
 
-**Dernière mise à jour :** `llm.py` terminé et branché dans `/route` et `/report` (Gemini Lite, repli, cache). Prochaine étape côté implémentation : `scripts/attach_features.py` dès que `data/clean/` arrive, et l'interface.
+**Dernière mise à jour :** interface complète (carte de nuit, satellite, trajets animés, signalement, rentrer ensemble, couches de données) + liste des plans à filmer dans `demo/demo_script.md`. Prochaine étape côté implémentation : `scripts/attach_features.py` dès que `data/clean/` arrive.
 
 ## Toute l'équipe
 - [x] Idée, zone de démo (**Berkeley** : campus, Downtown, Southside, Northside), contrats dans [SPEC.md](SPEC.md)
@@ -29,7 +29,9 @@
 - [ ] Régler `REPORT_STEP` (api.py) sur le scénario de démo : 1 signalement « sombre et vide » doit suffire à changer le trajet
 - [ ] Avant d'enregistrer : jouer le scénario de démo, puis commiter `data/llm_cache.json` (`git add data/llm_cache.json`). Ne pas le commiter avant, il change à chaque test
 - [ ] `/match` avec `data/mock_users.json` (utilisateurs déplacés à Downtown BART → Unit 3 / Southside)
-- [ ] Interface (à déléguer à un agent de code) : clic départ/arrivée, 2 tracés, panneau score/facteurs/explication, Signaler, Rentrer ensemble. Format de réponse : SPEC → Contract 3
+- [x] Interface : fond de nuit CARTO + Clair + Satellite, bouton démo, clic départ/arrivée, trajet sûr animé et lumineux vs trajet rapide en pointillés, cartes de score, barres par facteur (couverture et fiabilité), encadré « Gemini understood », mode Signaler → nouveau trajet, panneau Rentrer ensemble, couches de données. Version téléphone en panneau du bas
+- [x] `GET /layers` : points et parcs de `data/clean/` pour la carte (jamais les crimes)
+- [ ] Tester l'interface dans le navigateur (local, puis sur Render) et corriger ce qui cloche
 
 ## Données
 - [ ] Sources Berkeley trouvées : **noter le nom exact et le lien de chaque jeu de données** dans README → Data sources
@@ -46,6 +48,9 @@
 
 ## Démo et soumission
 - [x] Scénario vérifié sur le graphe : **Downtown Berkeley BART → Unit 3**. Le plus rapide (1 495 m) traverse environ 420 m du Grinnell Natural Area et d'un bois du campus ; le contournement par les rues fait +35 m (+2 %). Secours : Channing & Telegraph → BART
+- [ ] **Tournage maintenant, en plein jour** (1 personne, environ 20 min) : plans A1–A7 de [demo/demo_script.md](demo/demo_script.md) (sortie de BART, chemin dans les bois, rue éclairée, Unit 3, téléphone en main, marche à plusieurs, photo d'équipe)
+- [ ] Enregistrements d'écran B1–B7 (bureau + vue téléphone) une fois `graph.pkl` avec les données
+- [ ] Visuels C1–C4 : vignette et carte de titre (ChatGPT), schéma « qui fait quoi », jugement, limites
 - [ ] **T+40 point d'étape :** rapide vs sûr avec les vraies données, en ligne ? Sinon, la mise en relation reste codée en dur
 - [ ] **T+60 gel des fonctionnalités**
 - [ ] Réveiller le service Render, tester le scénario de démo 2 fois

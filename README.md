@@ -24,6 +24,8 @@ A student gets off BART at Downtown Berkeley at 11 pm to walk back to the Unit 3
 5. **Human loop**: a report on a segment raises its penalty, and the route visibly changes.
 6. **Walk together**: people going the same way at the same time are matched, with a lit, public meeting point.
 
+**Interface** (`static/`, Leaflet, no build step): night basemap (CARTO Dark Matter) with Light and Satellite (Esri) options, animated glowing safe route vs dashed fastest route, score cards, factor bars with data coverage and reliability, "Gemini understood" box, report mode (tap a street → Gemini tags → reroute), walk-together panel, and toggleable data layers (lamps, broken lights, open venues, help points, parks). Crime is never drawn on the map.
+
 ## Data sources
 | Factor | Source | Reliability |
 |---|---|---|
@@ -77,7 +79,7 @@ Every push to `main` redeploys automatically. The free instance sleeps after 15 
 - OpenStreetMap lighting data is very incomplete: only 7.5 % of street segments in our zone have a `lit` tag (88 % of those say "lit"). A missing tag means "unknown", never "dark".
 - Sidewalks are mapped as separate unnamed footways (60 % of segments), so explanations name the nearest street rather than the footway.
 - Each route shows a confidence level and a warning when a factor has little or no data on that route.
-- Crime data reflects where incidents are reported and where police patrol, not actual risk. We use it filtered, aggregated and with low weight, and we **never label a neighborhood "dangerous"**.
+- Crime data reflects where incidents are reported and where police patrol, not actual risk. We use it filtered, aggregated and with low weight, we **never label a neighborhood "dangerous"**, and we never draw incidents on the map.
 - Meeting strangers is risky: verified university email, public meeting points, trip sharing with a trusted contact, SOS and block are part of the design (shown in the demo, not yet functional).
 - Minimal personal data; location is shared only during a trip.
 

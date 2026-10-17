@@ -53,6 +53,7 @@ Routing cost (`backend/routing.py`): `cost = length * (1 + LAMBDA * (risk + huma
 All coordinates are `[lat, lon]`.
 - `POST /route {origin, dest, profile_text, time}` → `{fast_path, safe_path, fast, safe, same_route, lambda, explanation, weights, coverage_warning}` where `fast`/`safe` = `{length_m, duration_min, score, confidence, factors: [{name, risk, coverage, reliability}], coverage_warning, streets}` (`risk` None when no data on the route), plus `profile: {weights, max_detour, unsupported_needs, summary, source}` (show `summary` so the user can correct it) and `explanation_source`. **Implemented with Gemini.**
 - `POST /report {lat, lon, comment}` → `{segment: {u, v, geometry, name}, tags, severity, source, updated_penalty}`. **Implemented** (Gemini tags, keyword fallback); the frontend then calls `/route` again.
+- `GET /layers` → `{points: {lamp, light_outage, venue_late, help: [[lat, lon], ...]}, parks: GeoJSON | null}` from `data/clean/` (max 4,000 points per kind). **Crime is never exposed as map points.** **Implemented.**
 - `POST /match {user_id, origin, dest, window, profile}` → `{group, meeting_point, shared_route, explanation, safeguards}` (mock).
 - `POST /trip/feedback {trip_id, sliders: {safe, alone, respected}, comment}` → `{tags, updated_penalties}` (mock).
 

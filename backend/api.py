@@ -1,4 +1,6 @@
 """FastAPI app: API endpoints + serves the frontend in static/. /route and /report use the real graph; /match and /trip/feedback are still mocks."""
+import csv
+import json
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -63,6 +65,29 @@ def route_facts(summary: dict) -> dict:
 @app.get("/health")
 def health():
     return {"ok": True}
+
+
+# Map overlays. Crime points are deliberately NOT exposed: we never show "dangerous spots" on a map.
+LAYER_KINDS = ["lamp", "light_outage", "venue_late", "help"]
+MAX_POINTS = 4000
+
+
+@app.get("/layers")
+def layers():
+    out = {"points": {k: [] for k in LAYER_KINDS}, "parks": None}
+    clean = ROOT / "data" / "clean"
+    if (clean / "points.csv").exists():
+        with open(clean / "points.csv", newline="", encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                pts = out["points"].get(row.get("kind"))
+                if pts is not None and len(pts) < MAX_POINTS:
+                    try:
+                        pts.append([round(float(row["lat"]), 6), round(float(row["lon"]), 6)])
+                    except (KeyError, TypeError, ValueError):
+                        pass
+    if (clean / "parks.geojson").exists():
+        out["parks"] = json.loads((clean / "parks.geojson").read_text(encoding="utf-8"))
+    return out
 
 
 @app.post("/route")

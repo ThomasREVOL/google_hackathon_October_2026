@@ -2,17 +2,86 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Safe Route Home</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="map"></div>
+
+  <header id="topbar">
+    <div class="logo" aria-hidden="true"></div>
+    <div>
+      <h1>Safe Route Home</h1>
+      <p>The fastest route is not the safest route.</p>
+    </div>
+  </header>
+
   <aside id="panel">
-    <h1>Safe Route Home</h1>
-    <!-- TODO: profile textarea, time, "Compute" button, score + factor bars, explanation, Report, Walk together -->
+    <div class="grab" aria-hidden="true"></div>
+
+    <section id="plan">
+      <p class="hint" id="hint">Tap the map to set your start, then your destination.</p>
+      <div class="row">
+        <button class="chip" id="demo-btn" type="button">Demo · Downtown BART → Unit 3</button>
+        <label class="time" for="time">Leaving at <input id="time" type="time" value="23:00"></label>
+      </div>
+      <textarea id="profile" rows="2" placeholder="How do you like to walk home? e.g. “I walk alone, I prefer busy streets even if it's longer”"></textarea>
+      <button class="primary" id="go" type="button" disabled>Find my route</button>
+    </section>
+
+    <section id="results" hidden>
+      <div id="understood" class="understood" hidden></div>
+      <div id="rerouted" class="rerouted" hidden>Route updated from a community report</div>
+
+      <div class="cards">
+        <div class="card fast">
+          <div class="label"><span class="swatch"></span>Fastest</div>
+          <div class="score" id="fast-score">–</div>
+          <div class="meta" id="fast-meta"></div>
+        </div>
+        <div class="card safe">
+          <div class="label"><span class="swatch"></span>Safer</div>
+          <div class="score" id="safe-score">–</div>
+          <div class="meta" id="safe-meta"></div>
+        </div>
+      </div>
+
+      <div class="explanation">
+        <p id="explanation"></p>
+        <span id="explanation-source" class="source"></span>
+      </div>
+      <div id="warning" class="warning" hidden></div>
+
+      <h2>Why — factor by factor</h2>
+      <div id="factors" class="factors"></div>
+
+      <div class="actions">
+        <button id="report-btn" class="secondary" type="button">⚑ Report a spot</button>
+        <button id="match-btn" class="secondary" type="button">👥 Walk together</button>
+      </div>
+      <div id="match" class="match" hidden></div>
+    </section>
   </aside>
+
+  <div id="report-modal" class="modal" hidden>
+    <div class="modal-card">
+      <h3>What did you notice here?</h3>
+      <p class="hint">Your report adjusts this street for everyone's next route. Gemini only tags it; the routing stays ours.</p>
+      <textarea id="report-text" rows="3" placeholder="e.g. Very dark path, nobody around"></textarea>
+      <div class="row end">
+        <button id="report-cancel" class="ghost" type="button">Cancel</button>
+        <button id="report-send" class="primary small" type="button">Send report</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" hidden></div>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="app.js"></script>
 </body>
