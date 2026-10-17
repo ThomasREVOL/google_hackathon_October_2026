@@ -1,4 +1,4 @@
-# SPEC — Safe route home (San Francisco)
+# SPEC — Safe route home (Berkeley)
 
 > Every coding agent (Claude Code, Codex, Gemini CLI) reads this file first.
 
@@ -7,14 +7,14 @@
 **Our algorithm computes routes and scores. Gemini only translates (text → weights, comment → tags, facts → explanation). People decide what feels safe, report what data can't see, and look out for each other.**
 
 ## Demo story
-A student leaves a bar on Valencia St at 11 pm to go home to the Castro. The fastest route crosses Dolores Park in the dark. Our app proposes a slightly longer route that is lit, lively and close to help points, explains why, and matches her with two other students going the same way, with a safe meeting point.
+A student gets off BART at Downtown Berkeley at 11 pm to walk back to the Unit 3 residence halls. The fastest route crosses the Grinnell Natural Area and campus woods in the dark. Our app proposes a route that stays on streets, explains why, and matches her with two other students going the same way, with a safe meeting point.
 
-Demo zone: Mission / Castro / Dolores Park, 3 × 3 km box centered on (37.7600, -122.4269) → `data/graph_raw.pkl` (5,077 nodes, 15,322 edges, 2.5 MB).
-**Demo route (verified on the graph):** Valencia & 19th (37.7604, -122.4215) → Castro & 18th (37.7609, -122.4350). Fastest = 1,296 m through Dolores Park; around the park = 1,367 m (+5 %).
+Demo zone: UC Berkeley campus, Downtown, Southside, Northside — 3 × 3 km box centered on (37.8705, -122.2600) → `data/graph_raw.pkl` (5,396 nodes, 14,452 edges, 2.5 MB).
+**Demo route (verified on the graph):** Downtown Berkeley BART (37.8701, -122.2681) → Unit 3 (37.8669, -122.2560). Fastest = 1,495 m with ~420 m through the Grinnell Natural Area and an unnamed campus wood; avoiding parks/woods = 1,530 m (+2 %). Backup: Channing & Telegraph (37.8668, -122.2588) → Downtown BART, same crossing.
 
 ## Team split
-- **Data** (teammate 2): download + clean sources → `data/clean/`
-- **Scoring** (teammate 1): `backend/scoring.py`
+- **Data**: download + clean Berkeley sources → `data/clean/`
+- **Scoring**: `backend/scoring.py` (done, see Contract 2)
 - **Implementation**: graph + A* (`backend/graph.py`, `backend/routing.py`, `scripts/`), API, Gemini (`backend/llm.py`), matching, frontend (`static/`), deploy (Render)
 
 ## Contract 1 — data/clean (Data → Implementation)
@@ -24,37 +24,42 @@ Demo zone: Mission / Castro / Dolores Park, 3 × 3 km box centered on (37.7600, 
 | lat, lon | float | WGS84 |
 | kind | str | `crime`, `light_outage`, `lamp`, `venue_late`, `help` |
 | hour | int 0–23 | only for `crime` (empty otherwise) |
-| source | str | e.g. `sfpd`, `sf311`, `osm` |
+| source | str | dataset name, e.g. `berkeley_pd`, `osm` |
 
-- `crime`: SFPD Incident Reports 2018–present (DataSF `wg3w-h783`), last 12 months, **pedestrian-safety categories only** (assault, robbery, sex offense, weapons). Exclude vehicle break-ins, vehicle theft, drugs. Locations are snapped to the nearest intersection → attached to graph **nodes**.
-- `light_outage`: SF311 cases (DataSF `vw6y-z8j6`), streetlight category, last 12 months.
-- `lamp`: OSM `highway=street_lamp`. `venue_late`: OSM bars/restaurants/shops open at night (`opening_hours`; if missing, bars/pubs/nightclubs = open until 2 am, flagged as heuristic). `help`: OSM police, hospital, clinic, pharmacy, fire station.
+- `crime`: Berkeley open data found by the data teammate (document the exact dataset in README → Data sources). Last 12 months, **pedestrian-safety categories only** (assault, robbery, sex offense, weapons); exclude vehicle and property crimes, drugs.
+- `light_outage`, `lamp`: Berkeley sources if available; `lamp` can also come from OSM `highway=street_lamp`.
+- `venue_late`: OSM bars/restaurants/shops open at night (`opening_hours`; if missing, bars/pubs/nightclubs = open until 2 am, flagged as heuristic). `help`: OSM police, hospital, clinic, pharmacy, fire station, plus campus emergency phones if available.
+- **If a source does not exist for Berkeley, leave that kind out of the file** — the implementation then sets the feature to `None` (unknown) instead of `0` (which would read as "no lamps = dark everywhere").
 
-`data/clean/parks.geojson`: park polygons (OSM `leisure=park`).
+`data/clean/parks.geojson`: polygons of OSM `leisure=park|garden|nature_reserve`, `natural=wood|scrub`, `landuse=forest`. **Campus groves (Grinnell Natural Area, Eucalyptus Grove) are `natural=wood`, not parks** — they are what makes the demo route differ.
 
 ## Contract 2 — scoring (Scoring → Implementation)
-`backend/scoring.py`
-```python
-RELIABILITY: dict[str, float]      # per factor, how much we trust the source (crime is low: reporting/patrolling bias)
-DEFAULT_WEIGHTS: dict[str, float]  # per factor importance, overridden by the user profile (Gemini)
-def edge_risk(f: dict, w: dict, night: bool) -> tuple[float, dict]: ...
-```
-Edge features `f`: `lit` (1/0/None — **None on ~71 % of edges and OSM almost never tags `lit=no`, so None means unknown, not dark**; rely on lamps, outages and parks), `lamps`, `outages`, `venues_late`, `help`, `in_park` (bool), `crime` (night-band count at the edge's 2 end nodes), `length` (m).
-Returns `(risk, breakdown)` where breakdown is `{factor: contribution}`; contribution = `w[factor] * RELIABILITY[factor] * factor_risk` (each factor_risk in [0, 1]).
+`backend/scoring.py` (implemented): `RELIABILITY`, `DEFAULT_WEIGHTS`, `edge_risk(f, w, night) -> (risk, breakdown)`.
+Edge features `f` (computed by `scripts/attach_features.py`):
+| feature | value |
+|---|---|
+| `lit` | 1 / 0 / None from OSM. **None on ~92 % of Berkeley edges = unknown, not dark** |
+| `lamps`, `outages`, `venues_late` | counts within 50 m, or None if the source is missing |
+| `help` | **normalized proximity in [0, 1]**: `exp(-distance_to_nearest_help_m / 300)` |
+| `in_park` | bool (edge midpoint inside `parks.geojson`) |
+| `crime` | **normalized in [0, 1]** upstream: `min(1, log(1+n) / log(1+P95))`, n = night-band incidents at the edge's 2 end nodes |
+| `length` | meters |
 
-Routing cost (implementation): `cost = length * (1 + LAMBDA * (risk + human_penalty))`, LAMBDA = 3 at night, 0.5 by day. Safe route capped at 1.4 × fastest length (halve LAMBDA and retry).
+`risk` = reliability-weighted mean of the known factors (0.5 if nothing is known); `breakdown["_meta"]` has `factor_risks`, `weights`, `confidence`, `safety_score`.
+
+Routing cost (`backend/routing.py`): `cost = length * (1 + LAMBDA * (risk + human_penalty))`, LAMBDA = 3 at night (20:00–06:00), 0.5 by day. Safe route capped at 1.4 × fastest length (halve LAMBDA and retry).
 
 ## Contract 3 — API (backend ↔ frontend)
 All coordinates are `[lat, lon]`.
-- `POST /route {origin, dest, profile_text, time}` → `{fast_path, safe_path, fast, safe, explanation, weights, coverage_warning}` where `fast`/`safe` = `{length_m, duration_min, score, factors: [{name, value, reliability}]}`
-- `POST /match {user_id, origin, dest, window, profile}` → `{group, meeting_point, shared_route, explanation, safeguards}`
-- `POST /report {lat, lon, comment}` → `{segment, tags, severity, updated_penalty}`
-- `POST /trip/feedback {trip_id, sliders: {safe, alone, respected}, comment}` → `{tags, updated_penalties}`
+- `POST /route {origin, dest, profile_text, time}` → `{fast_path, safe_path, fast, safe, same_route, lambda, explanation, weights, coverage_warning}` where `fast`/`safe` = `{length_m, duration_min, score, confidence, factors: [{name, risk, coverage, reliability}], coverage_warning, streets}` (`risk` None when no data on the route). **Implemented.**
+- `POST /report {lat, lon, comment}` → `{segment: {u, v, geometry, name}, tags, severity, updated_penalty}`. **Implemented** (tags/severity fixed until Gemini is plugged in); the frontend then calls `/route` again.
+- `POST /match {user_id, origin, dest, window, profile}` → `{group, meeting_point, shared_route, explanation, safeguards}` (mock).
+- `POST /trip/feedback {trip_id, sliders: {safe, alone, respected}, comment}` → `{tags, updated_penalties}` (mock).
 
 ## Scope
 - Tier 1 (must work by T+40): fast vs safe route, score /10, factor breakdown with reliability, Gemini explanation, profile → weights, deployed on Render.
 - Tier 2 (T+40–T+60): report → penalty → route changes on screen; walk-together matching with `data/mock_users.json`; post-trip sliders.
-- Tier 3 (roadmap only, shown in the video): accessibility/slopes, Muni Owl GTFS, weather, events, ML risk model, real SOS / trip sharing / email verification.
+- Tier 3 (roadmap only, shown in the video): accessibility/slopes, transit, weather, events, ML risk model, real SOS / trip sharing / email verification.
 
 ## Rules for coding agents
 - Read this file before any task. Respect the 3 contracts exactly; never change them silently.

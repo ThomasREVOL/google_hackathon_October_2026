@@ -1,11 +1,18 @@
-"""FastAPI app: API endpoints + serves the frontend in static/. Returns mock data until routing/scoring are plugged in."""
+"""FastAPI app: API endpoints + serves the frontend in static/. /route and /report use the real graph; /match and /trip/feedback are still mocks."""
 from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from backend import graph, routing
+from backend.scoring import DEFAULT_WEIGHTS
+
 ROOT = Path(__file__).resolve().parent.parent
+
+# Human penalties per street segment (routing.pair_key -> [0, 1]), raised by /report. In memory: reset on restart.
+PENALTIES = {}
+REPORT_STEP = 0.4  # penalty added per report, times severity
 
 app = FastAPI(title="Safe route home")
 
@@ -37,9 +44,18 @@ class FeedbackRequest(BaseModel):
     comment: str = ""
 
 
-# Mock data (Valencia St -> Castro), replaced by backend.routing once the graph is ready
-MOCK_FAST = [[37.7649, -122.4216], [37.7612, -122.4246], [37.7596, -122.4269], [37.7609, -122.4350]]
-MOCK_SAFE = [[37.7649, -122.4216], [37.7648, -122.4290], [37.7643, -122.4330], [37.7609, -122.4350]]
+# Mock shared route for /match (Downtown Berkeley BART -> Unit 3), until matching.py is done
+MOCK_SHARED = [[37.8701, -122.2681], [37.8688, -122.2650], [37.8680, -122.2600], [37.8669, -122.2560]]
+
+
+def template_explanation(r: dict) -> str:
+    """Deterministic fallback until llm.explain_route is ready."""
+    fast, safe = r["fast"], r["safe"]
+    if r["same_route"]:
+        return f"With the data we have, the fastest route is also the safest ({safe['score']}/10)."
+    extra = safe["length_m"] - fast["length_m"]
+    return (f"The safer route is {extra} m longer (about {max(1, round(extra / routing.WALK_M_PER_MIN))} min) "
+            f"and scores {safe['score']}/10 instead of {fast['score']}/10.")
 
 
 @app.get("/health")
@@ -49,22 +65,14 @@ def health():
 
 @app.post("/route")
 def route(req: RouteRequest):
-    # TODO: graph.nearest_node -> llm.profile_to_weights -> routing.fastest_route / safest_route -> llm.explain_route
-    return {
-        "fast_path": MOCK_FAST,
-        "safe_path": MOCK_SAFE,
-        "fast": {"length_m": 1350, "duration_min": 17, "score": 4.1, "factors": [
-            {"name": "light", "value": 0.3, "reliability": 0.7},
-            {"name": "lively", "value": 0.2, "reliability": 0.6},
-        ]},
-        "safe": {"length_m": 1580, "duration_min": 20, "score": 7.8, "factors": [
-            {"name": "light", "value": 0.9, "reliability": 0.7},
-            {"name": "lively", "value": 0.8, "reliability": 0.6},
-        ]},
-        "explanation": "MOCK — 3 minutes longer, but avoids the unlit path through the park.",
-        "weights": {},
-        "coverage_warning": None,
-    }
+    G = graph.load_graph()
+    source, target = graph.nearest_node(*req.origin), graph.nearest_node(*req.dest)
+    weights = {}  # TODO: llm.profile_to_weights(req.profile_text); {} = scoring.DEFAULT_WEIGHTS
+    r = routing.plan(G, source, target, weights, routing.is_night(req.time), PENALTIES)
+    r["explanation"] = template_explanation(r)  # TODO: llm.explain_route(facts) with this as fallback
+    r["weights"] = weights or DEFAULT_WEIGHTS
+    r["coverage_warning"] = r["safe"]["coverage_warning"]
+    return r
 
 
 @app.post("/match")
@@ -72,8 +80,8 @@ def match(req: MatchRequest):
     # TODO: matching.find_group -> llm.explain_match
     return {
         "group": [{"user_id": "u2", "name": "Maya"}, {"user_id": "u3", "name": "Sam"}],
-        "meeting_point": {"lat": 37.7648, "lon": -122.4250, "label": "MOCK — corner of 16th & Valencia"},
-        "shared_route": MOCK_SAFE[:3],
+        "meeting_point": {"lat": 37.8701, "lon": -122.2681, "label": "MOCK — Downtown Berkeley BART entrance"},
+        "shared_route": MOCK_SHARED,
         "explanation": "MOCK — same direction, leaving within 10 minutes.",
         "safeguards": ["Verified university email", "Public, lit meeting point", "Trip shared with a trusted contact"],
     }
@@ -81,8 +89,17 @@ def match(req: MatchRequest):
 
 @app.post("/report")
 def report(req: ReportRequest):
-    # TODO: nearest edge -> llm.comment_to_tags -> update penalty
-    return {"segment": None, "tags": ["isolation"], "severity": 0.5, "updated_penalty": 0.2}
+    G = graph.load_graph()
+    u, v, k = graph.nearest_edge(req.lat, req.lon)
+    tags, severity = ["other"], 0.5  # TODO: llm.comment_to_tags(req.comment) with this as fallback
+    key = routing.pair_key(u, v)
+    PENALTIES[key] = min(1.0, PENALTIES.get(key, 0.0) + REPORT_STEP * severity)
+    return {
+        "segment": {"u": u, "v": v, "geometry": G.edges[u, v, k]["geometry"], "name": G.edges[u, v, k].get("name")},
+        "tags": tags,
+        "severity": severity,
+        "updated_penalty": round(PENALTIES[key], 2),
+    }
 
 
 @app.post("/trip/feedback")

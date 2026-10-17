@@ -18,8 +18,8 @@ import osmnx as ox
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "data" / "graph_raw.pkl"
 
-CENTER = (37.7600, -122.4269)  # Dolores Park, San Francisco (lat, lon)
-DIST_M = 1500  # half-side of the bounding box: 3 x 3 km covers Valencia St -> Castro
+CENTER = (37.8705, -122.2600)  # UC Berkeley campus (lat, lon)
+DIST_M = 1500  # half-side of the bounding box: 3 x 3 km covers campus, Downtown BART, Southside, Northside
 
 # OSM values of the "lit" tag (https://wiki.openstreetmap.org/wiki/Key:lit)
 LIT_YES = {"yes", "24/7", "automatic", "limited", "interval", "sunset-sunrise", "dusk-dawn"}

@@ -2,14 +2,14 @@
 
 Google DeepMind hackathon @ UC Berkeley, October 2026 — *"The Human Side of Building with AI"*
 
-**"The fastest route is not the safest route."** A mobile-first web app that computes a safety-aware walking route at night in San Francisco, explains why, and lets people walk home together.
+**"The fastest route is not the safest route."** A mobile-first web app that computes a safety-aware walking route at night around UC Berkeley, explains why, and lets people walk home together.
 
 - **🎥 Demo video:** _coming soon_
 - **🌐 Live app:** https://safe-route-home.onrender.com (free instance: first load can take ~1 min) · API docs: https://safe-route-home.onrender.com/docs
 - **📋 Team status:** [TODO.md](TODO.md) · **🧠 Judgment log:** [DECISIONS.md](DECISIONS.md) · **📐 Spec and contracts:** [SPEC.md](SPEC.md)
 
 ## The problem
-A student leaves a bar on Valencia St at 11 pm to walk home to the Castro. A standard maps app sends her through Dolores Park in the dark because it is 3 minutes shorter.
+A student gets off BART at Downtown Berkeley at 11 pm to walk back to the Unit 3 residence halls. The fastest route sends her about 400 m through the Grinnell Natural Area and campus woods in the dark. Staying on streets is only about 35 m longer.
 
 ## Why AI alone is not enough
 - **Our algorithm** (A* on a weighted street graph) computes routes and scores. It is rule-based and explainable.
@@ -17,7 +17,7 @@ A student leaves a bar on Valencia St at 11 pm to walk home to the Castro. A sta
 - **People** decide what feels safe for them, report what data cannot see (a broken light, a street that felt isolated), and look out for each other by walking together.
 
 ## How it works
-1. **Precompute** (local): OSMnx walking graph of Mission / Castro / Dolores Park, with public data attached to each street segment.
+1. **Precompute** (local): OSMnx walking graph of a 3 × 3 km box around UC Berkeley (campus, Downtown, Southside, Northside), with public data attached to each street segment.
 2. **Score**: each factor's contribution = importance (from the user's profile) × reliability of the data source × factor risk.
 3. **Route**: A* for the fastest route (length) and the safest route (length × (1 + λ · risk)), with a maximum detour of 40 %.
 4. **Explain**: score out of 10, breakdown per factor with its reliability, and a Gemini explanation grounded only in those facts.
@@ -27,12 +27,12 @@ A student leaves a bar on Valencia St at 11 pm to walk home to the Castro. A sta
 ## Data sources
 | Factor | Source | Reliability |
 |---|---|---|
-| Reported incidents | DataSF SFPD Incident Reports 2018–present (`wg3w-h783`), pedestrian-safety categories only | 0.4 (reporting and patrolling bias) |
-| Streetlight outages | DataSF SF311 Cases (`vw6y-z8j6`), streetlight category | 0.6 |
-| Lighting | OpenStreetMap `lit` tag and street lamps | 0.7 |
+| Reported incidents | _Berkeley dataset — to be filled by the data teammate_, pedestrian-safety categories only | 0.4 (reporting and patrolling bias) |
+| Streetlight outages | _Berkeley dataset, if available — data teammate_ | 0.6 |
+| Lighting | OpenStreetMap `lit` tag and street lamps (+ Berkeley data if available) | 0.7 |
 | Lively streets | OpenStreetMap venues open late | 0.6 |
 | Help points | OpenStreetMap police, hospitals, pharmacies, fire stations | 0.9 |
-| Parks | OpenStreetMap | 0.9 |
+| Parks and campus woods | OpenStreetMap (`leisure=park`, `natural=wood`, …) | 0.9 |
 | User reports | This app | grows with the number of reports |
 
 ## Judgment calls
@@ -74,8 +74,9 @@ Every push to `main` redeploys automatically. The free instance sleeps after 15 
 
 ## Limits and ethics
 - The score is an estimate from partial data and user reports, **not a guarantee of safety**.
-- OpenStreetMap lighting data is incomplete: only 28.6 % of street segments in our zone have a `lit` tag, and almost all of those say "lit". A missing tag means "unknown", never "dark".
-- Sidewalks are mapped as separate unnamed footways (about two thirds of segments), so explanations name the nearest street rather than the footway.
+- OpenStreetMap lighting data is very incomplete: only 7.5 % of street segments in our zone have a `lit` tag (88 % of those say "lit"). A missing tag means "unknown", never "dark".
+- Sidewalks are mapped as separate unnamed footways (60 % of segments), so explanations name the nearest street rather than the footway.
+- Each route shows a confidence level and a warning when a factor has little or no data on that route.
 - Crime data reflects where incidents are reported and where police patrol, not actual risk. We use it filtered, aggregated and with low weight, and we **never label a neighborhood "dangerous"**.
 - Meeting strangers is risky: verified university email, public meeting points, trip sharing with a trusted contact, SOS and block are part of the design (shown in the demo, not yet functional).
 - Minimal personal data; location is shared only during a trip.

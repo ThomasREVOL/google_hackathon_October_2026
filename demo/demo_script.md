@@ -1,6 +1,6 @@
 # Demo script (2–3 min)
 
-1. **0:00–0:20 — The story.** Student, 11 pm, Valencia & 19th → Castro & 18th. A standard maps app sends her through Dolores Park in the dark (1,296 m); going around is only 71 m more.
+1. **0:00–0:20 — The story.** Student, 11 pm, gets off BART at Downtown Berkeley, walks to Unit 3. A standard maps app sends her ~400 m through the Grinnell Natural Area and campus woods in the dark; staying on streets is only ~35 m more.
 2. **0:20–1:20 — Fast vs safe route.** Score, factor breakdown with data reliability, plain-language explanation.
 3. **1:20–2:00 — Walk together.** Matched with 2 students going the same way, lit and open meeting point, safeguards.
 4. **2:00–2:20 — Human in the loop.** A user report changes a segment's score and the route updates live.

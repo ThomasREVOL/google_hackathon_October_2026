@@ -4,10 +4,10 @@
 > Git : `git pull --rebase` avant de commencer et avant chaque push, `git add <tes fichiers>` uniquement, jamais `git add -A` (voir README → Team git workflow).
 > Repères : **T+40** point d'étape · **T+60** gel des fonctionnalités · **T+70** vidéo · **T+115** soumission
 
-**Dernière mise à jour :** graphe OSM construit (`data/graph_raw.pkl`) et scénario de démo validé ; prochaine étape côté implémentation : `backend/graph.py` puis `backend/routing.py` (A*).
+**Dernière mise à jour :** passage à **Berkeley** (graphe reconstruit, scénario BART → Unit 3 validé) ; `graph.py` et `routing.py` (A*) écrits et testés ; `/route` et `/report` branchés sur le vrai graphe. Prochaine étape côté implémentation : `scripts/attach_features.py` dès que `data/clean/` arrive, et en parallèle `backend/llm.py` + l'interface.
 
 ## Toute l'équipe
-- [x] Idée, zone de démo (Mission / Castro / Dolores Park), contrats dans [SPEC.md](SPEC.md)
+- [x] Idée, zone de démo (**Berkeley** : campus, Downtown, Southside, Northside), contrats dans [SPEC.md](SPEC.md)
 - [x] Squelette du repo (backend, scripts, static, data, render.yaml)
 - [x] Push du squelette
 - [ ] Chacun clone le repo et crée son environnement virtuel `.venv` (voir README → Run locally) — implémentation ✅
@@ -18,30 +18,31 @@
 - [x] Déployer le squelette sur Render (Blueprint `render_hackathon_berkeley`, service `safe-route-home`)
 - [x] URL dans le README : https://safe-route-home.onrender.com
 - [ ] Vérifier `GEMINI_API_KEY` dans Render → safe-route-home → barre de gauche, section **MANAGE** → **Environment**
-- [x] `scripts/build_graph.py` → `data/graph_raw.pkl` (5 077 nœuds, 15 322 segments, 2,5 Mo, environ 1 min 15)
-- [ ] `backend/graph.py` : `load_graph`, `nearest_node`, `nearest_edge`
-- [ ] `backend/routing.py` : A* rapide / sûr, `route_summary`
-- [ ] `/route` branché sur le vrai graphe (risque provisoire = 0 en attendant les données)
-- [ ] `scripts/attach_features.py` (dès que `data/clean/` est prêt) → `data/graph.pkl`
-- [ ] `backend/llm.py` : 3 fonctions + repli + cache du scénario de démo
-- [ ] `/report` → pénalité → le trajet change à l'écran
-- [ ] `/match` avec `data/mock_users.json`
-- [ ] Interface (à déléguer à un agent de code) : clic départ/arrivée, 2 tracés, panneau score/facteurs/explication, Signaler, Rentrer ensemble
+- [x] `scripts/build_graph.py` → `data/graph_raw.pkl` pour **Berkeley** (5 396 nœuds, 14 452 segments, 2,5 Mo)
+- [x] `backend/graph.py` : `load_graph` (prend `graph.pkl` s'il existe, sinon `graph_raw.pkl`), `nearest_node`, `nearest_edge`
+- [x] `backend/routing.py` : A* rapide / sûr, détour max 1,4×, `route_summary` (score, confiance, facteurs, couverture), `plan()` — environ 0,2 s puis 0,03 s grâce au cache
+- [x] `/route` branché sur le vrai graphe (explication = modèle de texte en attendant Gemini)
+- [x] `/report` → pénalité sur le segment le plus proche (dans les 2 sens), testé : le trajet sûr change
+- [ ] `scripts/attach_features.py` (dès que `data/clean/` est prêt) → `data/graph.pkl`, avec `help` et `crime` normalisés et `None` pour les sources absentes (voir SPEC → Contract 2)
+- [ ] `backend/llm.py` : 3 fonctions + repli + cache du scénario de démo, puis les brancher dans `/route` et `/report`
+- [ ] `/match` avec `data/mock_users.json` (utilisateurs déplacés à Downtown BART → Unit 3 / Southside)
+- [ ] Interface (à déléguer à un agent de code) : clic départ/arrivée, 2 tracés, panneau score/facteurs/explication, Signaler, Rentrer ensemble. Format de réponse : SPEC → Contract 3
 
 ## Données
-- [ ] OSM : lampadaires, tag `lit`, lieux ouverts tard, points d'aide, parcs
-- [ ] SFPD `wg3w-h783` : 12 derniers mois, catégories piétons uniquement, heure
-- [ ] SF311 `vw6y-z8j6` : pannes d'éclairage, 12 derniers mois
-- [ ] `data/clean/points.csv` + `data/clean/parks.geojson` au format de [SPEC.md](SPEC.md)
-- [x] Couverture du tag `lit` : 28,6 % des segments (presque tous « lit »), notée dans README → Limits. **Une valeur manquante = inconnu, pas sombre** : s'appuyer sur les lampadaires, les pannes 311 et les parcs
+- [ ] Sources Berkeley trouvées : **noter le nom exact et le lien de chaque jeu de données** dans README → Data sources
+- [ ] OSM : lampadaires, lieux ouverts tard, points d'aide
+- [ ] Parcs et bois en polygones : `leisure=park|garden|nature_reserve`, **`natural=wood|scrub`**, `landuse=forest` (le Grinnell Natural Area et les bois du campus sont en `natural=wood`, et ce sont eux qui font la différence dans la démo)
+- [ ] Incidents signalés : 12 derniers mois, catégories piétons uniquement, heure
+- [ ] `data/clean/points.csv` + `data/clean/parks.geojson` au format de [SPEC.md](SPEC.md). **Si une source n'existe pas, ne pas mettre de lignes de ce type** (sinon 0 lampadaire = « sombre partout »)
+- [x] Couverture du tag `lit` à Berkeley : **7,5 % des segments** (88 % « lit »), notée dans README → Limits. Une valeur manquante = inconnu, pas sombre
 
 ## Scoring
-- [ ] `edge_risk()` : normalisation de chaque facteur entre 0 et 1
+- [x] `edge_risk()` : normalisation de chaque facteur entre 0 et 1, inconnu ≠ risque, métadonnées de confiance (vérifié avec `routing.py` par l'implémentation)
 - [ ] Valider `RELIABILITY` et `DEFAULT_WEIGHTS`, justifier dans [DECISIONS.md](DECISIONS.md)
-- [ ] Tester sur 3 segments du scénario de démo (parc vs rue animée)
+- [ ] Tester sur 3 segments du scénario de démo (bois du campus vs rue) une fois `graph.pkl` construit
 
 ## Démo et soumission
-- [x] Scénario vérifié sur le graphe : **Valencia & 19th → Castro & 18th**, le plus rapide (1 296 m) traverse Dolores Park, le contournement fait +71 m (+5 %). Utilisateurs fictifs déplacés à Valencia & 19th
+- [x] Scénario vérifié sur le graphe : **Downtown Berkeley BART → Unit 3**. Le plus rapide (1 495 m) traverse environ 420 m du Grinnell Natural Area et d'un bois du campus ; le contournement par les rues fait +35 m (+2 %). Secours : Channing & Telegraph → BART
 - [ ] **T+40 point d'étape :** rapide vs sûr avec les vraies données, en ligne ? Sinon, la mise en relation reste codée en dur
 - [ ] **T+60 gel des fonctionnalités**
 - [ ] Réveiller le service Render, tester le scénario de démo 2 fois
