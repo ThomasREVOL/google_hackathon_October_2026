@@ -31,6 +31,7 @@
 - [ ] `/match` avec `data/mock_users.json` (utilisateurs déplacés à Downtown BART → Unit 3 / Southside)
 - [x] Interface : fond de nuit CARTO + Clair + Satellite, bouton démo, clic départ/arrivée, trajet sûr animé et lumineux vs trajet rapide en pointillés, cartes de score, barres par facteur (couverture et fiabilité), encadré « Gemini understood », mode Signaler → nouveau trajet, panneau Rentrer ensemble, couches de données. Version téléphone en panneau du bas
 - [x] `GET /layers` : points et parcs de `data/clean/` pour la carte (jamais les crimes)
+- [x] En-tête `Cache-Control: no-cache` : un simple rafraîchissement affiche la dernière version déployée (avant, le navigateur gardait l'ancienne interface)
 - [ ] Tester l'interface dans le navigateur (local, puis sur Render) et corriger ce qui cloche
 
 ## Données

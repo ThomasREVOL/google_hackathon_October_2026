@@ -19,6 +19,14 @@ REPORT_STEP = 0.4  # penalty added per report, times severity
 app = FastAPI(title="Safe route home")
 
 
+@app.middleware("http")
+async def no_stale_frontend(request, call_next):
+    """Browsers revalidate every file (cheap thanks to ETags), so a new deploy shows up on a normal refresh."""
+    response = await call_next(request)
+    response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
 class RouteRequest(BaseModel):
     origin: list[float]  # [lat, lon]
     dest: list[float]
