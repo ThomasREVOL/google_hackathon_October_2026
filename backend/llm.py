@@ -3,7 +3,26 @@ Every function has a deterministic fallback so the demo never breaks.
 """
 import os
 
+import truststore
+
+truststore.inject_into_ssl()  # use the OS certificate store (fixes SSL errors behind proxies/antivirus)
+
+from dotenv import load_dotenv
+from google import genai
+
+load_dotenv()  # local: reads .env; on Render the env var is set in the dashboard
+
 MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
+
+_client = None
+
+
+def get_client():
+    """Shared Gemini client, None if no key (callers then use their fallback)."""
+    global _client
+    if _client is None and os.getenv("GEMINI_API_KEY"):
+        _client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+    return _client
 
 
 def profile_to_weights(profile_text: str) -> dict:

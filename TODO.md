@@ -3,18 +3,19 @@
 > Chacun coche **uniquement sa section** (moins de conflits git). Mettre à jour après chaque tâche terminée.
 > Repères : **T+40** point d'étape · **T+60** gel des fonctionnalités · **T+70** vidéo · **T+115** soumission
 
-**Dernière mise à jour :** squelette poussé ; versions des dépendances fixées et Python 3.14 aligné entre local et Render ; environnement virtuel documenté dans le README.
+**Dernière mise à jour :** squelette déployé sur Render (redéploiement automatique à chaque push sur `main`) ; clé Gemini testée en local ; prochaine étape côté implémentation : `scripts/build_graph.py`.
 
 ## Toute l'équipe
 - [x] Idée, zone de démo (Mission / Castro / Dolores Park), contrats dans [SPEC.md](SPEC.md)
 - [x] Squelette du repo (backend, scripts, static, data, render.yaml)
 - [x] Push du squelette
-- [ ] Chacun clone le repo et crée son environnement virtuel `.venv` (voir README → Run locally)
-- [ ] Clé Gemini de chacun dans `.env` (voir `.env.example`)
+- [ ] Chacun clone le repo et crée son environnement virtuel `.venv` (voir README → Run locally) — implémentation ✅
+- [ ] Clé Gemini dans `.env` de chacun (voir `.env.example`), transmise en privé, jamais sur git ni dans un canal public — implémentation ✅ (testée)
 - [x] `uvicorn backend.api:app --reload` → la carte s'affiche sur http://localhost:8000 (vérifié par l'implémentation)
 
 ## Implémentation (graphe, A*, API, Gemini, interface, déploiement)
-- [ ] Déployer le squelette sur Render (New → Blueprint, `GEMINI_API_KEY`), puis mettre l'URL dans le README
+- [x] Déployer le squelette sur Render (Blueprint `render_hackathon_berkeley`, service `safe-route-home`)
+- [ ] Vérifier `GEMINI_API_KEY` dans Render → safe-route-home → Environment, puis mettre l'URL dans le README
 - [ ] `scripts/build_graph.py` → `data/graph_raw.pkl`
 - [ ] `backend/graph.py` : `load_graph`, `nearest_node`, `nearest_edge`
 - [ ] `backend/routing.py` : A* rapide / sûr, `route_summary`

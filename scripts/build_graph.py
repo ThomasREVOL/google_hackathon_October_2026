@@ -2,6 +2,10 @@
 
 Output: data/graph_raw.pkl (networkx MultiDiGraph, nodes with x/y, edges with length/geometry).
 """
+import truststore
+
+truststore.inject_into_ssl()  # use the OS certificate store (fixes SSL errors behind proxies/antivirus)
+
 CENTER = (37.7600, -122.4269)  # Dolores Park, San Francisco
 DIST_M = 2000
 

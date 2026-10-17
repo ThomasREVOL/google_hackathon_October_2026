@@ -58,7 +58,8 @@ All coordinates are `[lat, lon]`.
 ## Rules for coding agents
 - Read this file before any task. Respect the 3 contracts exactly; never change them silently.
 - Small, testable changes; run the app after each one. Do not refactor working code.
-- Free tools only: Gemini API free tier (`google-genai`), key in env var `GEMINI_API_KEY`. No paid APIs. Never commit `.env`.
+- Free tools only: Gemini API free tier (`google-genai`), key in env var `GEMINI_API_KEY`. No paid APIs. Never commit `.env`. Use `backend.llm.get_client()` (model `gemini-flash-latest`, tested OK).
+- Any script that downloads data starts with `import truststore; truststore.inject_into_ssl()` (otherwise SSL CERTIFICATE_VERIFY_FAILED on this network).
 - Gemini never computes routes or scores and never invents safety/accessibility facts: explanations use only the facts JSON passed in, otherwise say "no information".
 - Every Gemini call has a deterministic fallback (default weights, template explanation) so the demo never breaks.
 - Production deps stay light (`requirements.txt`); OSMnx/pandas are only for local scripts (`requirements-dev.txt`).

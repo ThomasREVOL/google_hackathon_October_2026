@@ -54,13 +54,16 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1          # macOS/Linux: source .venv/bin/activate
 pip install -r requirements-dev.txt   # app + local data scripts (OSMnx, pandas)
 copy .env.example .env                # add your GEMINI_API_KEY from https://aistudio.google.com
-uvicorn backend.api:app --reload
+uvicorn backend.api:app --reload --reload-dir backend --reload-dir static
 ```
-Open http://localhost:8000. To rebuild the data: run `scripts/build_graph.py` then `scripts/attach_features.py`.
+Open http://localhost:8000 (map) or http://localhost:8000/docs (try the API endpoints). To rebuild the data: run `scripts/build_graph.py` then `scripts/attach_features.py`.
 If PowerShell blocks the activation script: `Set-ExecutionPolicy -Scope Process Bypass`.
+If you get `SSL: CERTIFICATE_VERIFY_FAILED` (proxy or antivirus), add `import truststore; truststore.inject_into_ssl()` at the top of your script (already done in `backend/llm.py` and `scripts/build_graph.py`).
 
 ## Deploy
-Render → New → Blueprint → this repo (reads `render.yaml`) → set `GEMINI_API_KEY`. Render installs only `requirements.txt` (pinned versions, so `data/graph.pkl` loads with the same networkx/numpy it was built with).
+**Option A — Blueprint:** Render → New → Blueprint → connect GitHub → this repo, branch `main` (reads `render.yaml`, free plan) → enter `GEMINI_API_KEY` → Deploy.
+**Option B — manual Web Service** (if the Blueprint asks for a paid plan): Render → New → Web Service → this repo → Language Python 3, branch `main`, Build `pip install -r requirements.txt`, Start `uvicorn backend.api:app --host 0.0.0.0 --port $PORT`, Instance type Free, env var `GEMINI_API_KEY`, health check path `/health`.
+Every push to `main` redeploys automatically. The free instance sleeps after 15 min idle (about 1 min to wake up) and has 512 MB RAM. Render installs only `requirements.txt` (pinned versions, so `data/graph.pkl` loads with the same networkx/numpy it was built with).
 
 ## Limits and ethics
 - The score is an estimate from partial data and user reports, **not a guarantee of safety**.
