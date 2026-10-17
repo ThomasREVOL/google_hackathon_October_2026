@@ -1,5 +1,14 @@
-# Local data scripts only (not installed on Render)
+# Local data pipeline + scripts only (Render installs requirements.txt, not this file)
 -r requirements.txt
-osmnx
+osmnx>=2.0
+geopandas
+shapely
 pandas
+pyarrow
 requests
+scikit-learn
+folium
+opening_hours_py
+pytest
+# optional (local DEM); install only if it works on your machine:
+# rasterio

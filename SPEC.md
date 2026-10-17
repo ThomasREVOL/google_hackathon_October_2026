@@ -69,7 +69,8 @@ All coordinates are `[lat, lon]`.
 - Any script that downloads data starts with `import truststore; truststore.inject_into_ssl()` (otherwise SSL CERTIFICATE_VERIFY_FAILED on this network).
 - Gemini never computes routes or scores and never invents safety/accessibility facts: explanations use only the facts JSON passed in, otherwise say "no information".
 - Every Gemini call has a deterministic fallback (default weights, template explanation) so the demo never breaks.
-- Production deps stay light (`requirements.txt`); OSMnx/pandas are only for local scripts (`requirements-dev.txt`).
+- Production deps stay light and pinned (`requirements.txt`: what Render installs). Data-pipeline libraries (OSMnx, geopandas, pandas, pyarrow…) go in `requirements-dev.txt` only — never replace `requirements.txt`.
+- `.gitignore` must keep ignoring `.env`.
 - Never label a neighborhood "dangerous"; crime data is "reported incidents", low reliability.
 - Git: never `git add -A` / `git add .`; stage only the files you changed; `git pull --rebase` before pushing (teammates push to the same `main`).
 - After finishing a task: tick it in `TODO.md` (your own section only, update "Dernière mise à jour"), and update `README.md` if setup, structure, data sources or the live URL changed.

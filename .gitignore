@@ -1,6 +1,32 @@
+# secrets (NEVER commit the Gemini key)
+.env
+.env.*
+!.env.example
+
+# python
 .venv/
+venv/
 __pycache__/
 *.pyc
+
+# data: raw downloads and caches stay local; clean/ and processed/ are committed
+data/raw/*
+!data/raw/.gitkeep
 data/cache/
 data/raw/*.zip
 data/raw/*.tif
+
+# node
+node_modules/
+dist/
+.vite/
+
+# video files (upload the demo to YouTube, link it in README)
+*.mp4
+*.mov
+*.mkv
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/

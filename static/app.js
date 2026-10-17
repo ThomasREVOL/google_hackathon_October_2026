@@ -249,7 +249,7 @@ async function loadLayers() {
     }
     const styles = {
       lamp: ["Street lamps", "#fbbf24", 2, false],
-      light_outage: ["Broken streetlights (reported)", "#f97316", 4, true],
+      light_outage: ["Broken streetlights (simulated demo data)", "#f97316", 4, true],
       venue_late: ["Open late", "#e879f9", 3, false],
       help: ["Help points", "#60a5fa", 5, true],
     };
