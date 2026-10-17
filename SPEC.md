@@ -63,3 +63,4 @@ All coordinates are `[lat, lon]`.
 - Every Gemini call has a deterministic fallback (default weights, template explanation) so the demo never breaks.
 - Production deps stay light (`requirements.txt`); OSMnx/pandas are only for local scripts (`requirements-dev.txt`).
 - Never label a neighborhood "dangerous"; crime data is "reported incidents", low reliability.
+- After finishing a task: tick it in `TODO.md` (your own section only, update "Dernière mise à jour"), and update `README.md` if setup, structure, data sources or the live URL changed.
