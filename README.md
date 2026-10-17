@@ -5,7 +5,7 @@ Google DeepMind hackathon @ UC Berkeley, October 2026 — *"The Human Side of Bu
 **"The fastest route is not the safest route."** A mobile-first web app that computes a safety-aware walking route at night in San Francisco, explains why, and lets people walk home together.
 
 - **🎥 Demo video:** _coming soon_
-- **🌐 Live app:** _coming soon (Render)_
+- **🌐 Live app:** https://safe-route-home.onrender.com (free instance: first load can take ~1 min) · API docs: https://safe-route-home.onrender.com/docs
 - **📋 Team status:** [TODO.md](TODO.md) · **🧠 Judgment log:** [DECISIONS.md](DECISIONS.md) · **📐 Spec and contracts:** [SPEC.md](SPEC.md)
 
 ## The problem
@@ -42,7 +42,7 @@ See [DECISIONS.md](DECISIONS.md). The 3 strongest will be summarized here.
 ```
 backend/   api.py (FastAPI + serves static/), graph.py, routing.py (A*), scoring.py, llm.py (Gemini), matching.py
 scripts/   build_graph.py, attach_features.py (run locally, need requirements-dev.txt)
-data/      clean/ (processed sources), raw/ (not committed), mock_users.json, graph.pkl
+data/      clean/ (processed sources), raw/ (not committed), mock_users.json, graph_raw.pkl (OSM walking graph), graph.pkl (with features)
 static/    index.html, app.js, style.css (Leaflet map)
 demo/      demo_script.md
 ```
@@ -60,6 +60,13 @@ Open http://localhost:8000 (map) or http://localhost:8000/docs (try the API endp
 If PowerShell blocks the activation script: `Set-ExecutionPolicy -Scope Process Bypass`.
 If you get `SSL: CERTIFICATE_VERIFY_FAILED` (proxy or antivirus), add `import truststore; truststore.inject_into_ssl()` at the top of your script (already done in `backend/llm.py` and `scripts/build_graph.py`).
 
+## Team git workflow
+Everyone pushes to `main` (Render redeploys on every push), so:
+1. `git pull --rebase` before starting and before every push.
+2. Stage **only your own files**: `git add backend/scoring.py` — never `git add -A` / `git add .`.
+3. `git commit -m "..."` then `git pull --rebase` then `git push`.
+4. On a conflict in a shared file (README.md, TODO.md): keep both versions, then `git add <file>` and `git rebase --continue`.
+
 ## Deploy
 **Option A — Blueprint:** Render → New → Blueprint → connect GitHub → this repo, branch `main` (reads `render.yaml`, free plan) → enter `GEMINI_API_KEY` → Deploy.
 **Option B — manual Web Service** (if the Blueprint asks for a paid plan): Render → New → Web Service → this repo → Language Python 3, branch `main`, Build `pip install -r requirements.txt`, Start `uvicorn backend.api:app --host 0.0.0.0 --port $PORT`, Instance type Free, env var `GEMINI_API_KEY`, health check path `/health`.
@@ -67,6 +74,8 @@ Every push to `main` redeploys automatically. The free instance sleeps after 15 
 
 ## Limits and ethics
 - The score is an estimate from partial data and user reports, **not a guarantee of safety**.
+- OpenStreetMap lighting data is incomplete: only 28.6 % of street segments in our zone have a `lit` tag, and almost all of those say "lit". A missing tag means "unknown", never "dark".
+- Sidewalks are mapped as separate unnamed footways (about two thirds of segments), so explanations name the nearest street rather than the footway.
 - Crime data reflects where incidents are reported and where police patrol, not actual risk. We use it filtered, aggregated and with low weight, and we **never label a neighborhood "dangerous"**.
 - Meeting strangers is risky: verified university email, public meeting points, trip sharing with a trusted contact, SOS and block are part of the design (shown in the demo, not yet functional).
 - Minimal personal data; location is shared only during a trip.

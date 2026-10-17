@@ -1,8 +1,8 @@
 [
-  {"user_id": "u1", "name": "Lea", "origin": [37.7649, -122.4216], "dest": [37.7609, -122.4350], "window": ["23:00", "23:15"], "profile": {"same_gender_only": true, "gender": "f", "pace": "normal", "languages": ["en", "fr"]}},
-  {"user_id": "u2", "name": "Maya", "origin": [37.7652, -122.4220], "dest": [37.7614, -122.4342], "window": ["23:05", "23:20"], "profile": {"same_gender_only": true, "gender": "f", "pace": "normal", "languages": ["en"]}},
-  {"user_id": "u3", "name": "Sam", "origin": [37.7645, -122.4211], "dest": [37.7620, -122.4355], "window": ["23:00", "23:30"], "profile": {"same_gender_only": false, "gender": "f", "pace": "slow", "languages": ["en", "es"]}},
-  {"user_id": "u4", "name": "Jordan", "origin": [37.7655, -122.4195], "dest": [37.7690, -122.4290], "window": ["23:10", "23:25"], "profile": {"same_gender_only": false, "gender": "m", "pace": "fast", "languages": ["en"]}},
-  {"user_id": "u5", "name": "Priya", "origin": [37.7599, -122.4148], "dest": [37.7560, -122.4200], "window": ["22:30", "22:45"], "profile": {"same_gender_only": false, "gender": "f", "pace": "normal", "languages": ["en", "hi"]}},
-  {"user_id": "u6", "name": "Alex", "origin": [37.7647, -122.4218], "dest": [37.7605, -122.4345], "window": ["23:00", "23:20"], "profile": {"same_gender_only": false, "gender": "nb", "pace": "normal", "languages": ["en"], "accessibility": "wheelchair"}}
+  {"user_id": "u1", "name": "Lea", "origin": [37.7604, -122.4215], "dest": [37.7609, -122.435], "window": ["23:00", "23:15"], "profile": {"same_gender_only": true, "gender": "f", "pace": "normal", "languages": ["en", "fr"]}},
+  {"user_id": "u2", "name": "Maya", "origin": [37.7607, -122.4218], "dest": [37.7614, -122.4342], "window": ["23:05", "23:20"], "profile": {"same_gender_only": true, "gender": "f", "pace": "normal", "languages": ["en"]}},
+  {"user_id": "u3", "name": "Sam", "origin": [37.7601, -122.4212], "dest": [37.762, -122.4355], "window": ["23:00", "23:30"], "profile": {"same_gender_only": false, "gender": "f", "pace": "slow", "languages": ["en", "es"]}},
+  {"user_id": "u4", "name": "Jordan", "origin": [37.7655, -122.4195], "dest": [37.769, -122.429], "window": ["23:10", "23:25"], "profile": {"same_gender_only": false, "gender": "m", "pace": "fast", "languages": ["en"]}},
+  {"user_id": "u5", "name": "Priya", "origin": [37.7599, -122.4148], "dest": [37.756, -122.42], "window": ["22:30", "22:45"], "profile": {"same_gender_only": false, "gender": "f", "pace": "normal", "languages": ["en", "hi"]}},
+  {"user_id": "u6", "name": "Alex", "origin": [37.7605, -122.422], "dest": [37.7605, -122.4345], "window": ["23:00", "23:20"], "profile": {"same_gender_only": false, "gender": "nb", "pace": "normal", "languages": ["en"], "accessibility": "wheelchair"}}
 ]

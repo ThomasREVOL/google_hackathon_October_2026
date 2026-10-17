@@ -9,7 +9,8 @@
 ## Demo story
 A student leaves a bar on Valencia St at 11 pm to go home to the Castro. The fastest route crosses Dolores Park in the dark. Our app proposes a slightly longer route that is lit, lively and close to help points, explains why, and matches her with two other students going the same way, with a safe meeting point.
 
-Demo zone: Mission / Castro / Dolores Park, ~2 km around (37.7600, -122.4269).
+Demo zone: Mission / Castro / Dolores Park, 3 × 3 km box centered on (37.7600, -122.4269) → `data/graph_raw.pkl` (5,077 nodes, 15,322 edges, 2.5 MB).
+**Demo route (verified on the graph):** Valencia & 19th (37.7604, -122.4215) → Castro & 18th (37.7609, -122.4350). Fastest = 1,296 m through Dolores Park; around the park = 1,367 m (+5 %).
 
 ## Team split
 - **Data** (teammate 2): download + clean sources → `data/clean/`
@@ -38,7 +39,7 @@ RELIABILITY: dict[str, float]      # per factor, how much we trust the source (c
 DEFAULT_WEIGHTS: dict[str, float]  # per factor importance, overridden by the user profile (Gemini)
 def edge_risk(f: dict, w: dict, night: bool) -> tuple[float, dict]: ...
 ```
-Edge features `f`: `lit` (1/0/None), `lamps`, `outages`, `venues_late`, `help`, `in_park` (bool), `crime` (night-band count at the edge's 2 end nodes), `length` (m).
+Edge features `f`: `lit` (1/0/None — **None on ~71 % of edges and OSM almost never tags `lit=no`, so None means unknown, not dark**; rely on lamps, outages and parks), `lamps`, `outages`, `venues_late`, `help`, `in_park` (bool), `crime` (night-band count at the edge's 2 end nodes), `length` (m).
 Returns `(risk, breakdown)` where breakdown is `{factor: contribution}`; contribution = `w[factor] * RELIABILITY[factor] * factor_risk` (each factor_risk in [0, 1]).
 
 Routing cost (implementation): `cost = length * (1 + LAMBDA * (risk + human_penalty))`, LAMBDA = 3 at night, 0.5 by day. Safe route capped at 1.4 × fastest length (halve LAMBDA and retry).
@@ -64,4 +65,5 @@ All coordinates are `[lat, lon]`.
 - Every Gemini call has a deterministic fallback (default weights, template explanation) so the demo never breaks.
 - Production deps stay light (`requirements.txt`); OSMnx/pandas are only for local scripts (`requirements-dev.txt`).
 - Never label a neighborhood "dangerous"; crime data is "reported incidents", low reliability.
+- Git: never `git add -A` / `git add .`; stage only the files you changed; `git pull --rebase` before pushing (teammates push to the same `main`).
 - After finishing a task: tick it in `TODO.md` (your own section only, update "Dernière mise à jour"), and update `README.md` if setup, structure, data sources or the live URL changed.
