@@ -128,6 +128,7 @@ textarea { width: 100%; resize: vertical; margin-bottom: 10px; font-size: 0.9rem
 .leaflet-control-attribution a { color: var(--muted) !important; }
 .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--bg); color: var(--text); }
 
+.tiles-night { filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9) saturate(0.6); }
 .route-safe { filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.9)); }
 .route-match { filter: drop-shadow(0 0 5px rgba(167, 139, 250, 0.9)); }
 .report-seg { filter: drop-shadow(0 0 6px rgba(248, 113, 113, 1)); animation: pulse 1.2s ease-in-out infinite; }

@@ -29,7 +29,8 @@
 - [ ] Régler `REPORT_STEP` (api.py) sur le scénario de démo : 1 signalement « sombre et vide » doit suffire à changer le trajet
 - [ ] Avant d'enregistrer : jouer le scénario de démo, puis commiter `data/llm_cache.json` (`git add data/llm_cache.json`). Ne pas le commiter avant, il change à chaque test
 - [ ] `/match` avec `data/mock_users.json` (utilisateurs déplacés à Downtown BART → Unit 3 / Southside)
-- [x] Interface : fond de nuit CARTO + Clair + Satellite, bouton démo, clic départ/arrivée, trajet sûr animé et lumineux vs trajet rapide en pointillés, cartes de score, barres par facteur (couverture et fiabilité), encadré « Gemini understood », mode Signaler → nouveau trajet, panneau Rentrer ensemble, couches de données. Version téléphone en panneau du bas
+- [x] Fonds de carte : CARTO exige désormais une clé, remplacé par Esri Dark Gray (Night), OSM filtré en sombre (Night detailed), OSM (Light), Esri (Satellite), tous testés sans clé
+- [x] Interface : fond de nuit + Clair + Satellite, bouton démo, clic départ/arrivée, trajet sûr animé et lumineux vs trajet rapide en pointillés, cartes de score, barres par facteur (couverture et fiabilité), encadré « Gemini understood », mode Signaler → nouveau trajet, panneau Rentrer ensemble, couches de données. Version téléphone en panneau du bas
 - [x] `GET /layers` : points et parcs de `data/clean/` pour la carte (jamais les crimes)
 - [x] En-tête `Cache-Control: no-cache` : un simple rafraîchissement affiche la dernière version déployée (avant, le navigateur gardait l'ancienne interface)
 - [ ] Tester l'interface dans le navigateur (local, puis sur Render) et corriger ce qui cloche

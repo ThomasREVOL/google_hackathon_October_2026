@@ -1,13 +1,23 @@
 // Map + calls to the API (see SPEC.md, Contract 3). All coordinates are [lat, lon].
 
-// ---------- Base maps (free, no key): night by default, light and satellite on demand ----------
-const CARTO_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+// ---------- Base maps (free, no key; CARTO now requires a key) ----------
+const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services/";
+const OSM_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+const osm = function (className) {
+  return L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: OSM_ATTR, className: className || "" });
+};
 const baseLayers = {
-  "Night": L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { maxZoom: 20, subdomains: "abcd", attribution: CARTO_ATTR }),
-  "Light": L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", { maxZoom: 20, subdomains: "abcd", attribution: CARTO_ATTR }),
+  // Esri Dark Gray Canvas: clean, presentation look; sharp up to zoom 16 (upscaled beyond)
+  "Night": L.layerGroup([
+    L.tileLayer(ESRI + "Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19, maxNativeZoom: 16, attribution: "Tiles &copy; Esri" }),
+    L.tileLayer(ESRI + "Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19, maxNativeZoom: 16 }),
+  ]),
+  // OpenStreetMap with a dark CSS filter: every footpath visible, sharp at all zooms
+  "Night (detailed)": osm("tiles-night"),
+  "Light": osm(),
   "Satellite": L.layerGroup([
-    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19, attribution: "Imagery &copy; Esri" }),
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png", { maxZoom: 20, subdomains: "abcd", attribution: CARTO_ATTR }),
+    L.tileLayer(ESRI + "World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19, attribution: "Imagery &copy; Esri" }),
+    L.tileLayer(ESRI + "Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19 }),
   ]),
 };
 
@@ -76,7 +86,7 @@ function fitTo(latlngs) {
   map.fitBounds(L.latLngBounds(latlngs), {
     paddingTopLeft: wide ? [430, 90] : [30, 90],
     paddingBottomRight: wide ? [70, 40] : [30, Math.round(window.innerHeight * 0.58) + 20],
-    maxZoom: 17,
+    maxZoom: 16,  // the Night basemap is sharpest at 16
   });
 }
 
