@@ -13,7 +13,7 @@ A student gets off BART at Downtown Berkeley at 11 pm to walk back to the Unit 3
 
 ## Why AI alone is not enough
 - **Our algorithm** (A* on a weighted street graph) computes routes and scores. It is rule-based and explainable.
-- **Gemini only translates**: free-text profile → factor weights, a user's comment → tags, computed facts → plain-language explanation. It never computes a route and never invents a safety fact.
+- **Gemini only translates**: free-text profile → factor weights (and it restates what it understood, so the person can correct it), a user's comment → tags, computed facts → plain-language explanation. It never computes a route and never invents a safety fact: when data is missing, the explanation says so. Every call has a deterministic fallback and a cache, so the app keeps working if Gemini is unavailable.
 - **People** decide what feels safe for them, report what data cannot see (a broken light, a street that felt isolated), and look out for each other by walking together.
 
 ## How it works

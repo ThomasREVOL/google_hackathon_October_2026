@@ -4,7 +4,7 @@
 > Git : `git pull --rebase` avant de commencer et avant chaque push, `git add <tes fichiers>` uniquement, jamais `git add -A` (voir README → Team git workflow).
 > Repères : **T+40** point d'étape · **T+60** gel des fonctionnalités · **T+70** vidéo · **T+115** soumission
 
-**Dernière mise à jour :** passage à **Berkeley** (graphe reconstruit, scénario BART → Unit 3 validé) ; `graph.py` et `routing.py` (A*) écrits et testés ; `/route` et `/report` branchés sur le vrai graphe. Prochaine étape côté implémentation : `scripts/attach_features.py` dès que `data/clean/` arrive, et en parallèle `backend/llm.py` + l'interface.
+**Dernière mise à jour :** `llm.py` terminé et branché dans `/route` et `/report` (Gemini Lite, repli, cache). Prochaine étape côté implémentation : `scripts/attach_features.py` dès que `data/clean/` arrive, et l'interface.
 
 ## Toute l'équipe
 - [x] Idée, zone de démo (**Berkeley** : campus, Downtown, Southside, Northside), contrats dans [SPEC.md](SPEC.md)
@@ -24,7 +24,10 @@
 - [x] `/route` branché sur le vrai graphe (explication = modèle de texte en attendant Gemini)
 - [x] `/report` → pénalité sur le segment le plus proche (dans les 2 sens), testé : le trajet sûr change
 - [ ] `scripts/attach_features.py` (dès que `data/clean/` est prêt) → `data/graph.pkl`, avec `help` et `crime` normalisés et `None` pour les sources absentes (voir SPEC → Contract 2)
-- [ ] `backend/llm.py` : 3 fonctions + repli + cache du scénario de démo, puis les brancher dans `/route` et `/report`
+- [x] `backend/llm.py` : `profile_to_weights`, `comment_to_tags`, `explain_route`, `explain_match`, chacune avec repli + cache disque (`data/llm_cache.json`) + modèle de secours. Modèle `gemini-flash-lite-latest` (environ 1 s), car `gemini-flash-latest` était surchargé
+- [x] Gemini branché dans `/route` (profil → poids + détour max, explication) et `/report` (étiquettes + gravité) : environ 1,8 s par trajet, testé
+- [ ] Régler `REPORT_STEP` (api.py) sur le scénario de démo : 1 signalement « sombre et vide » doit suffire à changer le trajet
+- [ ] Avant d'enregistrer : jouer le scénario de démo, puis commiter `data/llm_cache.json` (`git add data/llm_cache.json`). Ne pas le commiter avant, il change à chaque test
 - [ ] `/match` avec `data/mock_users.json` (utilisateurs déplacés à Downtown BART → Unit 3 / Southside)
 - [ ] Interface (à déléguer à un agent de code) : clic départ/arrivée, 2 tracés, panneau score/facteurs/explication, Signaler, Rentrer ensemble. Format de réponse : SPEC → Contract 3
 

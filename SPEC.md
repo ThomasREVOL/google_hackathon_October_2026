@@ -51,8 +51,8 @@ Routing cost (`backend/routing.py`): `cost = length * (1 + LAMBDA * (risk + huma
 
 ## Contract 3 — API (backend ↔ frontend)
 All coordinates are `[lat, lon]`.
-- `POST /route {origin, dest, profile_text, time}` → `{fast_path, safe_path, fast, safe, same_route, lambda, explanation, weights, coverage_warning}` where `fast`/`safe` = `{length_m, duration_min, score, confidence, factors: [{name, risk, coverage, reliability}], coverage_warning, streets}` (`risk` None when no data on the route). **Implemented.**
-- `POST /report {lat, lon, comment}` → `{segment: {u, v, geometry, name}, tags, severity, updated_penalty}`. **Implemented** (tags/severity fixed until Gemini is plugged in); the frontend then calls `/route` again.
+- `POST /route {origin, dest, profile_text, time}` → `{fast_path, safe_path, fast, safe, same_route, lambda, explanation, weights, coverage_warning}` where `fast`/`safe` = `{length_m, duration_min, score, confidence, factors: [{name, risk, coverage, reliability}], coverage_warning, streets}` (`risk` None when no data on the route), plus `profile: {weights, max_detour, unsupported_needs, summary, source}` (show `summary` so the user can correct it) and `explanation_source`. **Implemented with Gemini.**
+- `POST /report {lat, lon, comment}` → `{segment: {u, v, geometry, name}, tags, severity, source, updated_penalty}`. **Implemented** (Gemini tags, keyword fallback); the frontend then calls `/route` again.
 - `POST /match {user_id, origin, dest, window, profile}` → `{group, meeting_point, shared_route, explanation, safeguards}` (mock).
 - `POST /trip/feedback {trip_id, sliders: {safe, alone, respected}, comment}` → `{tags, updated_penalties}` (mock).
 
@@ -64,7 +64,7 @@ All coordinates are `[lat, lon]`.
 ## Rules for coding agents
 - Read this file before any task. Respect the 3 contracts exactly; never change them silently.
 - Small, testable changes; run the app after each one. Do not refactor working code.
-- Free tools only: Gemini API free tier (`google-genai`), key in env var `GEMINI_API_KEY`. No paid APIs. Never commit `.env`. Use `backend.llm.get_client()` (model `gemini-flash-latest`, tested OK).
+- Free tools only: Gemini API free tier (`google-genai`), key in env var `GEMINI_API_KEY`. No paid APIs. Never commit `.env`. Use `backend/llm.py`: models `gemini-flash-lite-latest` (~1 s) then `gemini-3.1-flash-lite`; `gemini-flash-latest` was overloaded (503/504). Answers are cached in `data/llm_cache.json`.
 - Any script that downloads data starts with `import truststore; truststore.inject_into_ssl()` (otherwise SSL CERTIFICATE_VERIFY_FAILED on this network).
 - Gemini never computes routes or scores and never invents safety/accessibility facts: explanations use only the facts JSON passed in, otherwise say "no information".
 - Every Gemini call has a deterministic fallback (default weights, template explanation) so the demo never breaks.

@@ -80,10 +80,11 @@ def fastest_route(G, source, target) -> list:
     return nx.astar_path(G, source, target, heuristic=_heuristic(G), weight="length")
 
 
-def safest_route(G, source, target, weights: dict, night: bool, penalties: dict) -> tuple[list, float]:
+def safest_route(G, source, target, weights: dict, night: bool, penalties: dict,
+                 max_detour: float = MAX_DETOUR) -> tuple[list, float]:
     """-> (path, lambda used). Lambda is halved until the detour is acceptable."""
     risks = compute_risks(G, weights, night)
-    max_len = MAX_DETOUR * path_length(G, fastest_route(G, source, target))
+    max_len = max_detour * path_length(G, fastest_route(G, source, target))
     lam = LAMBDA_NIGHT if night else LAMBDA_DAY
     for _ in range(4):
         path = nx.astar_path(G, source, target, heuristic=_heuristic(G), weight=_cost(risks, penalties, lam))
@@ -159,10 +160,10 @@ def route_summary(G, path, weights: dict, night: bool, penalties: dict, lam: flo
     }
 
 
-def plan(G, source, target, weights: dict, night: bool, penalties: dict) -> dict:
+def plan(G, source, target, weights: dict, night: bool, penalties: dict, max_detour: float = MAX_DETOUR) -> dict:
     """Fastest vs safest, ready for the /route response (explanation added by the API)."""
     fast = fastest_route(G, source, target)
-    safe, lam = safest_route(G, source, target, weights, night, penalties)
+    safe, lam = safest_route(G, source, target, weights, night, penalties, max_detour)
     risks = compute_risks(G, weights, night)
     return {
         "fast_path": path_coords(G, fast, risks, penalties, 0.0),

@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from backend import graph, routing
+from backend import graph, llm, routing
 from backend.scoring import DEFAULT_WEIGHTS
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -48,14 +48,16 @@ class FeedbackRequest(BaseModel):
 MOCK_SHARED = [[37.8701, -122.2681], [37.8688, -122.2650], [37.8680, -122.2600], [37.8669, -122.2560]]
 
 
-def template_explanation(r: dict) -> str:
-    """Deterministic fallback until llm.explain_route is ready."""
-    fast, safe = r["fast"], r["safe"]
-    if r["same_route"]:
-        return f"With the data we have, the fastest route is also the safest ({safe['score']}/10)."
-    extra = safe["length_m"] - fast["length_m"]
-    return (f"The safer route is {extra} m longer (about {max(1, round(extra / routing.WALK_M_PER_MIN))} min) "
-            f"and scores {safe['score']}/10 instead of {fast['score']}/10.")
+def route_facts(summary: dict) -> dict:
+    """Compact facts sent to Gemini (small prompt, stable cache key)."""
+    return {
+        "length_m": summary["length_m"],
+        "duration_min": summary["duration_min"],
+        "score": summary["score"],
+        "confidence": summary["confidence"],
+        "factors": {f["name"]: {"risk": f["risk"], "coverage": f["coverage"]} for f in summary["factors"]},
+        "streets": summary["streets"][:6],
+    }
 
 
 @app.get("/health")
@@ -67,10 +69,20 @@ def health():
 def route(req: RouteRequest):
     G = graph.load_graph()
     source, target = graph.nearest_node(*req.origin), graph.nearest_node(*req.dest)
-    weights = {}  # TODO: llm.profile_to_weights(req.profile_text); {} = scoring.DEFAULT_WEIGHTS
-    r = routing.plan(G, source, target, weights, routing.is_night(req.time), PENALTIES)
-    r["explanation"] = template_explanation(r)  # TODO: llm.explain_route(facts) with this as fallback
-    r["weights"] = weights or DEFAULT_WEIGHTS
+    night = routing.is_night(req.time)
+    profile = llm.profile_to_weights(req.profile_text)  # Gemini translates text -> weights; routing stays ours
+    r = routing.plan(G, source, target, profile["weights"], night, PENALTIES, profile["max_detour"])
+    facts = {
+        "night": night,
+        "same_route": r["same_route"],
+        "fast": route_facts(r["fast"]),
+        "safe": route_facts(r["safe"]),
+        "unsupported_needs": profile["unsupported_needs"],
+        "profile_summary": profile["summary"],
+    }
+    r["explanation"], r["explanation_source"] = llm.explain_route(facts)
+    r["profile"] = profile
+    r["weights"] = profile["weights"] or DEFAULT_WEIGHTS
     r["coverage_warning"] = r["safe"]["coverage_warning"]
     return r
 
@@ -91,13 +103,14 @@ def match(req: MatchRequest):
 def report(req: ReportRequest):
     G = graph.load_graph()
     u, v, k = graph.nearest_edge(req.lat, req.lon)
-    tags, severity = ["other"], 0.5  # TODO: llm.comment_to_tags(req.comment) with this as fallback
+    t = llm.comment_to_tags(req.comment)
     key = routing.pair_key(u, v)
-    PENALTIES[key] = min(1.0, PENALTIES.get(key, 0.0) + REPORT_STEP * severity)
+    PENALTIES[key] = min(1.0, PENALTIES.get(key, 0.0) + REPORT_STEP * t["severity"])
     return {
         "segment": {"u": u, "v": v, "geometry": G.edges[u, v, k]["geometry"], "name": G.edges[u, v, k].get("name")},
-        "tags": tags,
-        "severity": severity,
+        "tags": t["tags"],
+        "severity": t["severity"],
+        "source": t["source"],
         "updated_penalty": round(PENALTIES[key], 2),
     }
 
