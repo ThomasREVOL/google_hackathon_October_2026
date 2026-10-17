@@ -89,15 +89,19 @@ textarea { width: 100%; resize: vertical; margin-bottom: 10px; font-size: 0.9rem
 .warning { background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.3); color: #fde68a; }
 
 .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.card { border-radius: 14px; padding: 12px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04); }
-.card.safe { border-color: rgba(52, 211, 153, 0.45); background: rgba(52, 211, 153, 0.08); }
-.card .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); display: flex; align-items: center; gap: 6px; }
-.swatch { width: 18px; height: 4px; border-radius: 2px; background: var(--fast); }
-.card.safe .swatch { background: var(--safe); box-shadow: 0 0 8px var(--safe); }
-.card .score { font-size: 2rem; font-weight: 800; margin: 4px 0 2px; }
+.card {
+  --c: var(--fast);
+  text-align: left; color: var(--text); cursor: pointer; border-radius: 14px; padding: 12px;
+  border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04); transition: border-color 0.2s, background 0.2s, transform 0.2s;
+}
+.card:hover { transform: translateY(-1px); border-color: var(--c); }
+.card.selected { border-color: var(--c); background: color-mix(in srgb, var(--c) 12%, transparent); box-shadow: 0 0 0 1px var(--c) inset; }
+.card .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.swatch { width: 18px; height: 4px; border-radius: 2px; background: var(--c); box-shadow: 0 0 8px var(--c); }
+.badge { font-size: 0.6rem; letter-spacing: 0.04em; color: #052e1f; background: var(--safe); border-radius: 6px; padding: 1px 5px; }
+.card .score { font-size: 1.9rem; font-weight: 800; margin: 4px 0 2px; color: var(--c); }
 .card .score small { font-size: 0.9rem; color: var(--muted); font-weight: 600; }
-.card.safe .score { color: var(--safe); }
-.card .meta { font-size: 0.8rem; color: var(--muted); }
+.card .meta { font-size: 0.76rem; color: var(--muted); }
 
 .explanation { margin: 12px 0 4px; }
 .explanation p { margin: 0 0 6px; line-height: 1.45; font-size: 0.92rem; }
@@ -142,7 +146,6 @@ textarea { width: 100%; resize: vertical; margin-bottom: 10px; font-size: 0.9rem
 .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--bg); color: var(--text); }
 
 .tiles-night { filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9) saturate(0.6); }
-.route-safe { filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.9)); }
 .route-match { filter: drop-shadow(0 0 5px rgba(167, 139, 250, 0.9)); }
 .report-seg { filter: drop-shadow(0 0 6px rgba(248, 113, 113, 1)); animation: pulse 1.2s ease-in-out infinite; }
 @keyframes pulse { 50% { stroke-opacity: 0.35; } }

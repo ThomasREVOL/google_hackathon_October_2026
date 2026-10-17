@@ -1,5 +1,9 @@
 # Safe Route Home
 
+[![Try the live app](https://img.shields.io/badge/▶_Try_the_live_app-safe--route--home.onrender.com-34d399?style=for-the-badge)](https://safe-route-home.onrender.com)
+
+**👉 https://safe-route-home.onrender.com** — click **"Demo · Downtown BART → Unit 3"** (first load can take ~1 min: free server waking up)
+
 Google DeepMind hackathon @ UC Berkeley, October 2026 — *"The Human Side of Building with AI"*
 
 **"The fastest route is not the safest route."** A mobile-first web app that computes a safety-aware walking route at night around UC Berkeley, explains why, and lets people walk home together.
@@ -19,7 +23,7 @@ A student gets off BART at Downtown Berkeley at 11 pm to walk back to the Unit 3
 ## How it works
 1. **Precompute** (local): OSMnx walking graph of a 3 × 3 km box around UC Berkeley (campus, Downtown, Southside, Northside), with public data attached to each street segment.
 2. **Score**: each factor's contribution = importance (from the user's profile) × reliability of the data source × factor risk.
-3. **Route**: A* for the fastest route (length) and the safest route (length × (1 + λ · risk)), with a maximum detour of 40 %.
+3. **Route**: A* for the fastest route (length) and the safest route (length × (1 + λ · risk)), with a maximum detour of 40 %, plus a **Balanced** (λ / 3, ≤ +20 %) and a **Liveliest** (busy streets first) option when they differ. Every option is scored with the person's own weights, and **the person chooses** — our algorithm proposes, it never decides for them.
 4. **Explain**: score out of 10, breakdown per factor with its reliability, and a Gemini explanation grounded only in those facts.
 5. **Human loop**: a report on a segment raises its penalty, and the route visibly changes.
 6. **Walk together**: students leaving around the same time (±15 min) from within 400 m are matched on how much of their *safe* routes they share; everyone's group preferences (e.g. women-only) are respected on both sides. The meeting point is the safest spot near the start that the whole group walks through. If nobody is going your way, the app offers Berkeley's real SafeWalk escort (UCPD, 510-642-9255). Matching runs on 6 fictional users (`data/mock_users.json`).

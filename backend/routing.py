@@ -81,11 +81,12 @@ def fastest_route(G, source, target) -> list:
 
 
 def safest_route(G, source, target, weights: dict, night: bool, penalties: dict,
-                 max_detour: float = MAX_DETOUR) -> tuple[list, float]:
+                 max_detour: float = MAX_DETOUR, lam: float | None = None) -> tuple[list, float]:
     """-> (path, lambda used). Lambda is halved until the detour is acceptable."""
     risks = compute_risks(G, weights, night)
     max_len = max_detour * path_length(G, fastest_route(G, source, target))
-    lam = LAMBDA_NIGHT if night else LAMBDA_DAY
+    if lam is None:
+        lam = LAMBDA_NIGHT if night else LAMBDA_DAY
     for _ in range(4):
         path = nx.astar_path(G, source, target, heuristic=_heuristic(G), weight=_cost(risks, penalties, lam))
         if path_length(G, path) <= max_len:
@@ -165,16 +166,41 @@ def route_summary(G, path, weights: dict, night: bool, penalties: dict, lam: flo
     }
 
 
+# Extra options between "fastest" and "safest". Our algorithm proposes; the person picks.
+# (id, label, weight overrides, share of the safest lambda, max detour)
+EXTRA_OPTIONS = [
+    ("balanced", "Balanced", {}, 1 / 3, 1.2),
+    ("lively", "Liveliest", {"lively": 1.0}, 1.0, MAX_DETOUR),
+]
+
+
 def plan(G, source, target, weights: dict, night: bool, penalties: dict, max_detour: float = MAX_DETOUR) -> dict:
-    """Fastest vs safest, ready for the /route response (explanation added by the API)."""
+    """Fastest vs safest (+ balanced and liveliest options), ready for the /route response.
+    Every option is scored with the person's own weights, so scores are comparable."""
     fast = fastest_route(G, source, target)
     safe, lam = safest_route(G, source, target, weights, night, penalties, max_detour)
     risks = compute_risks(G, weights, night)
+
+    def option(oid, label, path, opt_lam, recommended=False):
+        return {"id": oid, "label": label, "recommended": recommended,
+                "path": path_coords(G, path, risks, penalties, opt_lam),
+                "summary": route_summary(G, path, weights, night, penalties, opt_lam)}
+
+    found = [("fastest", "Fastest", fast, 0.0), ("safest", "Safest", safe, lam)]
+    base_lam = LAMBDA_NIGHT if night else LAMBDA_DAY
+    for oid, label, overrides, lam_share, detour in EXTRA_OPTIONS:
+        path, opt_lam = safest_route(G, source, target, {**(weights or {}), **overrides}, night, penalties,
+                                     min(detour, max_detour), base_lam * lam_share)
+        if all(path != p for _, _, p, _ in found):  # only show genuinely different routes
+            found.insert(-1, (oid, label, path, opt_lam))
+    options = [option(oid, label, path, opt_lam, oid == "safest") for oid, label, path, opt_lam in found]
+
     return {
-        "fast_path": path_coords(G, fast, risks, penalties, 0.0),
-        "safe_path": path_coords(G, safe, risks, penalties, lam),
-        "fast": route_summary(G, fast, weights, night, penalties, 0.0),
-        "safe": route_summary(G, safe, weights, night, penalties, lam),
+        "fast_path": options[0]["path"],
+        "safe_path": options[-1]["path"],
+        "fast": options[0]["summary"],
+        "safe": options[-1]["summary"],
+        "options": options,
         "lambda": lam,
         "same_route": fast == safe,
     }

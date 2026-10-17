@@ -111,8 +111,10 @@ async function findRoute(rerouted) {
   try {
     const r = await api("/route", { origin: origin, dest: dest, profile_text: $("profile").value, time: $("time").value || "23:00" });
     lastResult = r;
-    drawRoutes(r);
+    if (!r.options.some(function (o) { return o.id === selectedId; })) selectedId = "safest";
+    drawRoutes(r, true);
     renderResults(r, rerouted);
+    fitTo([].concat.apply([], r.options.map(function (o) { return o.path; })));
   } catch (e) {
     toast("Could not compute the route: " + e.message, 5000);
   } finally {
@@ -120,15 +122,39 @@ async function findRoute(rerouted) {
   }
 }
 
-function drawRoutes(r) {
+const OPTION_COLORS = { fastest: "#9aa4b5", balanced: "#fbbf24", lively: "#e879f9", safest: "#34d399" };
+let selectedId = "safest";
+
+function visibleOptions(r) {
+  // Same path for fastest and safest (e.g. by day): show it once
+  return r.same_route ? [Object.assign({}, r.options[0], { label: "Fastest & safest", recommended: true })] : r.options;
+}
+
+function drawRoutes(r, animateSelected) {
   routeLayer.clearLayers();
-  L.polyline(r.fast_path, { color: "#9aa4b5", weight: 4, opacity: 0.85, dashArray: "2 9", lineCap: "round" })
-    .bindTooltip("Fastest", { sticky: true }).addTo(routeLayer);
-  L.polyline(r.safe_path, { color: "#34d399", weight: 14, opacity: 0.18, lineCap: "round" }).addTo(routeLayer);
-  const safe = L.polyline(r.safe_path, { color: "#34d399", weight: 5, opacity: 1, lineCap: "round", className: "route-safe" })
-    .bindTooltip("Safer", { sticky: true }).addTo(routeLayer);
-  animate(safe, 1600);
-  fitTo(r.fast_path.concat(r.safe_path));
+  const opts = visibleOptions(r);
+  // Others first (thin, dimmed), selected last (glowing, on top)
+  opts.filter(function (o) { return o.id !== selectedId; }).forEach(function (o) {
+    L.polyline(o.path, { color: OPTION_COLORS[o.id], weight: 4, opacity: 0.6, dashArray: o.id === "fastest" ? "2 9" : null, lineCap: "round" })
+      .bindTooltip(o.label + " · " + o.summary.score + "/10", { sticky: true })
+      .on("click", function (e) { L.DomEvent.stopPropagation(e); selectOption(o.id); })
+      .addTo(routeLayer);
+  });
+  const sel = opts.filter(function (o) { return o.id === selectedId; })[0] || opts[opts.length - 1];
+  const color = OPTION_COLORS[sel.id];
+  L.polyline(sel.path, { color: color, weight: 14, opacity: 0.18, lineCap: "round" }).addTo(routeLayer);
+  const line = L.polyline(sel.path, { color: color, weight: 5, opacity: 1, lineCap: "round", className: "route-glow" })
+    .bindTooltip(sel.label + " · " + sel.summary.score + "/10", { sticky: true }).addTo(routeLayer);
+  const path = line.getElement();
+  if (path) path.style.filter = "drop-shadow(0 0 6px " + color + ")";
+  if (animateSelected) animate(line, 1600);
+}
+
+function selectOption(id) {
+  selectedId = id;
+  drawRoutes(lastResult, true);
+  renderCards(lastResult);
+  renderFactors(lastResult);
 }
 
 function renderResults(r, rerouted) {
@@ -145,11 +171,8 @@ function renderResults(r, rerouted) {
     understood.hidden = true;
   }
 
-  [["fast", r.fast], ["safe", r.safe]].forEach(function (pair) {
-    const s = pair[1];
-    $(pair[0] + "-score").innerHTML = s.score + "<small>/10</small>";
-    $(pair[0] + "-meta").textContent = s.length_m + " m · " + s.duration_min + " min · confidence " + Math.round(s.confidence * 100) + "%";
-  });
+  renderCards(r);
+  renderFactors(r);
 
   $("explanation").textContent = r.explanation;
   $("explanation-source").textContent = (r.explanation_source === "fallback")
@@ -161,10 +184,39 @@ function renderResults(r, rerouted) {
   if (p.unsupported_needs && p.unsupported_needs.length) warnings.push("No data yet for: " + p.unsupported_needs.join(", "));
   $("warning").textContent = warnings.join(" · ");
   $("warning").hidden = warnings.length === 0;
+}
 
+function renderCards(r) {
+  const box = $("cards");
+  box.innerHTML = "";
+  const fastLen = r.options[0].summary.length_m;
+  visibleOptions(r).forEach(function (o) {
+    const s = o.summary;
+    const card = el("button", "card" + (o.id === selectedId || r.same_route ? " selected" : ""));
+    card.type = "button";
+    card.style.setProperty("--c", OPTION_COLORS[o.id]);
+    const label = el("div", "label");
+    label.appendChild(el("span", "swatch"));
+    label.appendChild(document.createTextNode(o.label));
+    if (o.recommended) label.appendChild(el("span", "badge", "Recommended"));
+    card.appendChild(label);
+    const score = el("div", "score", String(s.score));
+    score.appendChild(el("small", "", "/10"));
+    card.appendChild(score);
+    const extra = s.length_m - fastLen;
+    card.appendChild(el("div", "meta", s.length_m + " m · " + s.duration_min + " min" + (extra > 0 ? " · +" + extra + " m" : "")));
+    card.appendChild(el("div", "meta", s.park_m > 0 ? "🌲 " + s.park_m + " m through parks/woods" : "Stays on streets"));
+    card.addEventListener("click", function () { selectOption(o.id); });
+    box.appendChild(card);
+  });
+}
+
+function renderFactors(r) {
+  // Compare the selected option with the fastest one
+  const sel = visibleOptions(r).filter(function (o) { return o.id === selectedId; })[0] || r.options[r.options.length - 1];
   const box = $("factors");
   box.innerHTML = "";
-  r.safe.factors.forEach(function (f, i) {
+  sel.summary.factors.forEach(function (f, i) {
     const fast = r.fast.factors[i];
     const row = document.createElement("div");
     row.className = "factor";
@@ -177,6 +229,7 @@ function renderResults(r, rerouted) {
       const pct = function (x) { return x === null || x === undefined ? 0 : Math.round((1 - x) * 100); };
       row.innerHTML = top + '<div class="bar fast"><i style="width:0"></i></div><div class="bar safe"><i style="width:0"></i></div>';
       const bars = row.querySelectorAll(".bar i");
+      bars[1].style.background = OPTION_COLORS[sel.id];
       setTimeout(function () { bars[0].style.width = pct(fast && fast.risk) + "%"; bars[1].style.width = pct(f.risk) + "%"; }, 50);
     }
     box.appendChild(row);
