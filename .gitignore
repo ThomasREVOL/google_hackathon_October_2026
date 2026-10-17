@@ -1,0 +1,29 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# node
+node_modules/
+dist/
+.vite/
+
+# python
+__pycache__/
+.venv/
+venv/
+*.pyc
+
+# video files (upload the demo to YouTube, link it in README)
+*.mp4
+*.mov
+*.mkv
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# raw downloads (too big for git); clean data and graph.pkl are committed
+data/raw/*
+!data/raw/.gitkeep

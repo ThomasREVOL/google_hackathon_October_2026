@@ -1,0 +1,5 @@
+# Local data scripts only (not installed on Render)
+-r requirements.txt
+osmnx
+pandas
+requests
