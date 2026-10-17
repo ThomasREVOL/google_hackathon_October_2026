@@ -1,0 +1,80 @@
+[
+  {
+    "id": "u1",
+    "name": "L\u00e9a",
+    "email_domain": "berkeley.edu",
+    "gender": "f",
+    "campus": "UCB",
+    "pace_m_s": 1.3,
+    "prefers_group_composition": "women_or_mixed",
+    "languages": [
+      "en",
+      "fr"
+    ]
+  },
+  {
+    "id": "u2",
+    "name": "Sofia",
+    "email_domain": "berkeley.edu",
+    "gender": "f",
+    "campus": "UCB",
+    "pace_m_s": 1.4,
+    "prefers_group_composition": "women_or_mixed",
+    "languages": [
+      "en",
+      "es"
+    ]
+  },
+  {
+    "id": "u3",
+    "name": "Ravi",
+    "email_domain": "berkeley.edu",
+    "gender": "m",
+    "campus": "UCB",
+    "pace_m_s": 1.5,
+    "prefers_group_composition": "any",
+    "languages": [
+      "en",
+      "hi"
+    ]
+  },
+  {
+    "id": "u4",
+    "name": "Maya",
+    "email_domain": "berkeley.edu",
+    "gender": "nb",
+    "campus": "UCB",
+    "pace_m_s": 1.3,
+    "prefers_group_composition": "any",
+    "languages": [
+      "en"
+    ]
+  },
+  {
+    "id": "u5",
+    "name": "Karim",
+    "email_domain": "berkeley.edu",
+    "gender": "m",
+    "campus": "UCB",
+    "pace_m_s": 0.9,
+    "mobility": "wheelchair",
+    "max_slope_pct": 5,
+    "prefers_group_composition": "any",
+    "languages": [
+      "en",
+      "ar"
+    ]
+  },
+  {
+    "id": "u6",
+    "name": "Priya",
+    "email_domain": "berkeley.edu",
+    "gender": "f",
+    "campus": "UCB",
+    "pace_m_s": 1.3,
+    "prefers_group_composition": "women_or_mixed",
+    "languages": [
+      "en"
+    ]
+  }
+]

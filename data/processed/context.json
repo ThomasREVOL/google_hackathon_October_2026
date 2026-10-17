@@ -1,0 +1,21 @@
+{
+  "now": "2026-10-17T23:15:00-07:00",
+  "weekday": "Friday",
+  "hour": 23,
+  "weather": {
+    "condition": "clear",
+    "temp_c": 14,
+    "rain": false
+  },
+  "events_ending_soon": [
+    {
+      "name": "Cal Bears football",
+      "venue": "California Memorial Stadium",
+      "ends_at": "2026-10-17T23:30:00-07:00",
+      "lat": 37.8707,
+      "lon": -122.251,
+      "effect": "crowd dispersing nearby, extra foot traffic"
+    }
+  ],
+  "notes": "Simulated for the hackathon demo."
+}
