@@ -40,7 +40,8 @@ const FACTOR_LABELS = {
 let origin = null, dest = null, originMarker = null, destMarker = null;
 let reportMode = false, pendingReport = null, lastResult = null;
 const routeLayer = L.layerGroup().addTo(map);
-const extraLayer = L.layerGroup().addTo(map);  // reports + walk-together
+const extraLayer = L.layerGroup().addTo(map);  // community reports made in this session
+const matchLayer = L.layerGroup().addTo(map);  // walk-together group
 
 const $ = (id) => document.getElementById(id);
 
@@ -206,34 +207,75 @@ async function sendReport() {
 }
 
 // ---------- Walk together ----------
+function addMinutes(hhmm, minutes) {
+  const parts = hhmm.split(":");
+  const total = (parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10) + minutes) % 1440;
+  return String(Math.floor(total / 60)).padStart(2, "0") + ":" + String(total % 60).padStart(2, "0");
+}
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
 async function walkTogether() {
   if (!origin || !dest) return toast("Set a start and a destination first.");
   const btn = $("match-btn");
   btn.classList.add("busy");
+  matchLayer.clearLayers();
   try {
     const t = $("time").value || "23:00";
-    const m = await api("/match", { user_id: "me", origin: origin, dest: dest, window: [t, t], profile: {} });
-    const mp = [m.meeting_point.lat, m.meeting_point.lon];
-    const shared = L.polyline(m.shared_route, { color: "#a78bfa", weight: 5, opacity: 0.95, dashArray: "1 10", lineCap: "round", className: "route-match" }).addTo(extraLayer);
-    animate(shared, 1200);
-    L.marker(mp, { icon: pin("meet", "★") }).bindPopup("Meeting point: " + m.meeting_point.label).addTo(extraLayer).openPopup();
+    const profile = $("women-only").checked ? { gender: "f", same_gender_only: true } : {};
+    const m = await api("/match", { user_id: "me", origin: origin, dest: dest, window: [t, addMinutes(t, 15)], profile: profile });
     const box = $("match");
-    box.innerHTML = "<b>Walking home together</b>";
-    const avatars = document.createElement("div");
-    avatars.className = "avatars";
+    box.innerHTML = "";
+
+    if (!m.group.length) {
+      box.appendChild(el("b", "", "Nobody is going your way right now"));
+      box.appendChild(el("p", "", m.explanation));
+      if (m.safewalk) {
+        const a = el("a", "safewalk", "📞 " + m.safewalk.label + " · " + m.safewalk.phone);
+        a.href = "tel:" + m.safewalk.phone.replace(/[^0-9+]/g, "");
+        box.appendChild(a);
+      }
+      box.hidden = false;
+      return;
+    }
+
+    // Map: meeting point, shared stretch, where the others start
+    const mp = [m.meeting_point.lat, m.meeting_point.lon];
+    if (m.shared_route.length) {
+      animate(L.polyline(m.shared_route, { color: "#a78bfa", weight: 6, opacity: 0.95, dashArray: "1 10", lineCap: "round", className: "route-match" })
+        .bindTooltip("Walked together: " + m.shared_m + " m", { sticky: true }).addTo(matchLayer), 1200);
+    }
     m.group.forEach(function (u) {
-      const a = document.createElement("div");
-      a.className = "avatar"; a.title = u.name; a.textContent = (u.name || "?").slice(0, 1);
-      avatars.appendChild(a);
+      L.marker(u.origin, { icon: pin("user", u.name.slice(0, 1)) }).bindTooltip(u.name).addTo(matchLayer);
     });
+    L.marker(mp, { icon: pin("meet", "★") }).bindPopup("<b>Meet here</b><br>" + m.meeting_point.label).addTo(matchLayer).openPopup();
+
+    // Panel
+    box.appendChild(el("b", "", "Walking home together · meet at " + m.meeting_point.label));
+    const avatars = el("div", "avatars");
+    m.group.forEach(function (u) { const a = el("div", "avatar", u.name.slice(0, 1)); a.title = u.name; avatars.appendChild(a); });
     box.appendChild(avatars);
-    const p = document.createElement("p");
-    p.textContent = m.explanation;
-    box.appendChild(p);
-    const ul = document.createElement("ul");
-    m.safeguards.forEach(function (s) { const li = document.createElement("li"); li.textContent = s; ul.appendChild(li); });
+    const members = el("div", "members");
+    m.group.forEach(function (u) {
+      members.appendChild(el("div", "member", u.name + " · leaves " + u.window[0] + "–" + u.window[u.window.length - 1] +
+        " · " + u.shared_m + " m together · " + u.pace + " pace"));
+    });
+    box.appendChild(members);
+    box.appendChild(el("p", "", m.explanation));
+    box.appendChild(el("span", "source", m.explanation_source === "fallback" ? "Template explanation" : "✦ Explained by Gemini, using only the matching facts"));
+    if (m.excluded_for_preferences) {
+      box.appendChild(el("p", "pref-note", m.excluded_for_preferences + " other student(s) going your way were not matched, to respect their group preferences."));
+    }
+    const ul = el("ul");
+    m.safeguards.forEach(function (s) { ul.appendChild(el("li", "", s)); });
     box.appendChild(ul);
     box.hidden = false;
+    fitTo(lastResult ? lastResult.safe_path.concat([mp]) : [mp]);
   } catch (e) {
     toast("Matching failed: " + e.message, 5000);
   } finally {
@@ -293,6 +335,7 @@ map.on("click", function (e) {
 $("go").addEventListener("click", function () { findRoute(false); });
 $("demo-btn").addEventListener("click", function () {
   extraLayer.clearLayers();
+  matchLayer.clearLayers();
   $("match").hidden = true;
   $("profile").value = DEMO.profile;
   $("time").value = DEMO.time;

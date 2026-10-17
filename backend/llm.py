@@ -219,7 +219,8 @@ def explain_route(facts: dict) -> tuple[str, str]:
 
 EXPLAIN_MATCH_SYSTEM = """In 1 or 2 short sentences, tell a student why they were matched with these people to walk home together
 and why this meeting point was chosen. Use ONLY the JSON facts given; if something is missing, do not mention it.
-Warm, plain tone. No markdown."""
+These people are fellow students who have never met: they simply leave around the same time and share part of tonight's route.
+Never imply they know each other or have walked together before. Warm, plain tone. No markdown."""
 
 
 def explain_match(facts: dict) -> tuple[str, str]:

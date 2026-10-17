@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from backend import graph, llm, routing
+from backend import graph, llm, matching, routing
 from backend.scoring import DEFAULT_WEIGHTS
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -67,10 +67,6 @@ class FeedbackRequest(BaseModel):
     trip_id: str
     sliders: dict  # {"safe": 0-10, "alone": 0-10, "respected": 0-10}
     comment: str = ""
-
-
-# Mock shared route for /match (Downtown Berkeley BART -> Unit 3), until matching.py is done
-MOCK_SHARED = [[37.8701, -122.2681], [37.8688, -122.2650], [37.8680, -122.2600], [37.8669, -122.2560]]
 
 
 def route_facts(summary: dict) -> dict:
@@ -148,16 +144,37 @@ def route(req: RouteRequest):
     return r
 
 
+SAFEGUARDS = [
+    "Verified @berkeley.edu email for everyone",
+    "Public meeting point, chosen for light, open venues and help nearby",
+    "Trip shared live with a trusted contact",
+    "Report or block anyone, any time",
+]
+# Real campus service, shown when nobody is going your way (https://nightsafety.berkeley.edu)
+SAFEWALK = {"label": "Request a free SafeWalk escort (UC Police, dusk to 3 am)", "phone": "510-642-9255"}
+
+
 @app.post("/match")
 def match(req: MatchRequest):
-    # TODO: matching.find_group -> llm.explain_match
-    return {
-        "group": [{"user_id": "u2", "name": "Maya"}, {"user_id": "u3", "name": "Sam"}],
-        "meeting_point": {"lat": 37.8701, "lon": -122.2681, "label": "MOCK — Downtown Berkeley BART entrance"},
-        "shared_route": MOCK_SHARED,
-        "explanation": "MOCK — same direction, leaving within 10 minutes.",
-        "safeguards": ["Verified university email", "Public, lit meeting point", "Trip shared with a trusted contact"],
+    G = get_graph()
+    me = {"user_id": req.user_id, "origin": req.origin, "dest": req.dest, "window": req.window, "profile": req.profile}
+    m = matching.find_group(G, me, routing.is_night(req.window[0]), PENALTIES)
+    m["safeguards"] = SAFEGUARDS
+    if not m["group"]:
+        m["explanation"], m["explanation_source"] = (
+            "Nobody is going your way at this time yet. You can still request a SafeWalk escort.", "fallback")
+        m["safewalk"] = SAFEWALK
+        return m
+    facts = {
+        "you_leave_between": req.window,
+        "group": [{"name": p["name"], "leaves_between": p["window"], "pace": p["pace"],
+                   "meters_of_tonights_route_in_common": p["shared_m"]} for p in m["group"]],
+        "meeting_point": m["meeting_point"]["label"],
+        "meeting_point_surroundings": m["meeting_point_facts"],
+        "people_not_matched_because_of_their_group_preferences": m["excluded_for_preferences"],
     }
+    m["explanation"], m["explanation_source"] = llm.explain_match(facts)
+    return m
 
 
 @app.post("/report")

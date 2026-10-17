@@ -22,7 +22,7 @@ A student gets off BART at Downtown Berkeley at 11 pm to walk back to the Unit 3
 3. **Route**: A* for the fastest route (length) and the safest route (length × (1 + λ · risk)), with a maximum detour of 40 %.
 4. **Explain**: score out of 10, breakdown per factor with its reliability, and a Gemini explanation grounded only in those facts.
 5. **Human loop**: a report on a segment raises its penalty, and the route visibly changes.
-6. **Walk together**: people going the same way at the same time are matched, with a lit, public meeting point.
+6. **Walk together**: students leaving around the same time (±15 min) from within 400 m are matched on how much of their *safe* routes they share; everyone's group preferences (e.g. women-only) are respected on both sides. The meeting point is the safest spot near the start that the whole group walks through. If nobody is going your way, the app offers Berkeley's real SafeWalk escort (UCPD, 510-642-9255). Matching runs on 6 fictional users (`data/mock_users.json`).
 
 **Interface** (`static/`, Leaflet, no build step): night basemap (Esri Dark Gray Canvas) with "Night (detailed)" (OpenStreetMap with a dark filter), Light (OpenStreetMap) and Satellite (Esri) options — all free without API key, animated glowing safe route vs dashed fastest route, score cards, factor bars with data coverage and reliability, "Gemini understood" box, report mode (tap a street → Gemini tags → reroute), walk-together panel, and toggleable data layers (lamps, broken lights, open venues, help points, parks). Crime is never drawn on the map.
 

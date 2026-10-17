@@ -4,7 +4,7 @@
 > Git : `git pull --rebase` avant de commencer et avant chaque push, `git add <tes fichiers>` uniquement, jamais `git add -A` (voir README → Team git workflow).
 > Repères : **T+40** point d'étape · **T+60** gel des fonctionnalités · **T+70** vidéo · **T+115** soumission
 
-**Dernière mise à jour :** `attach_features.py` terminé, la démo marche avec les vraies données (le trajet sûr évite les 426 m de bois de nuit). Prochaines étapes : `/match` réel, test dans le navigateur, puis enregistrements d'écran.
+**Dernière mise à jour :** `/match` réel (matching sur les trajets sûrs, préférences respectées, SafeWalk si personne) + interface du groupe. Prochaines étapes : test dans le navigateur, enregistrements d'écran, vidéo.
 
 ## Toute l'équipe
 - [x] Idée, zone de démo (**Berkeley** : campus, Downtown, Southside, Northside), contrats dans [SPEC.md](SPEC.md)
@@ -29,7 +29,8 @@
 - [x] Gemini branché dans `/route` (profil → poids + détour max, explication) et `/report` (étiquettes + gravité) : environ 1,8 s par trajet, testé
 - [x] `REPORT_STEP` vérifié : 1 signalement « very dark and nobody around » (gravité 0,8) suffit à changer le trajet
 - [ ] Avant d'enregistrer : jouer le scénario de démo, puis commiter `data/llm_cache.json` (`git add data/llm_cache.json`). Ne pas le commiter avant, il change à chaque test
-- [ ] `/match` avec `data/mock_users.json` (utilisateurs déplacés à Downtown BART → Unit 3 / Southside)
+- [x] `/match` réel (`backend/matching.py`) : fenêtres horaires, départs à moins de 400 m, préférences de groupe respectées des deux côtés, score sur le trajet sûr partagé, point de rendez-vous le plus sûr, explication Gemini, recours à SafeWalk si personne. Testé : sans préférence → Alex + Sam (Lea et Maya exclues par leur choix) ; « women-only » → Lea + Maya + Sam ; 2 h → SafeWalk
+- [x] Interface du groupe : case « women-only », membres sur la carte et en liste, trajet commun, note sur les préférences, bouton d'appel SafeWalk
 - [x] Fonds de carte : CARTO exige désormais une clé, remplacé par Esri Dark Gray (Night), OSM filtré en sombre (Night detailed), OSM (Light), Esri (Satellite), tous testés sans clé
 - [x] Interface : fond de nuit + Clair + Satellite, bouton démo, clic départ/arrivée, trajet sûr animé et lumineux vs trajet rapide en pointillés, cartes de score, barres par facteur (couverture et fiabilité), encadré « Gemini understood », mode Signaler → nouveau trajet, panneau Rentrer ensemble, couches de données. Version téléphone en panneau du bas
 - [x] `GET /layers` : points et parcs de `data/clean/` pour la carte (jamais les crimes)
