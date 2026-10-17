@@ -1,0 +1,98 @@
+[
+  {
+    "name": "Blue Sky Psychiatry",
+    "lat": 37.8584043,
+    "lon": -122.2441801,
+    "type": "doctors",
+    "offers": "walk-with-staff on request",
+    "hours": "08:00-02:00"
+  },
+  {
+    "name": "Stonemountain and Daughter Fine Fabrics",
+    "lat": 37.863548,
+    "lon": -122.267624,
+    "type": "fabric",
+    "offers": "free water",
+    "hours": "08:00-02:00"
+  },
+  {
+    "name": "CP Shades",
+    "lat": 37.857119,
+    "lon": -122.2536433,
+    "type": "clothes",
+    "offers": "free water",
+    "hours": "08:00-02:00"
+  },
+  {
+    "name": "John's Cleaners and Laundry",
+    "lat": 37.8569789,
+    "lon": -122.2593636,
+    "type": "laundry",
+    "offers": "safe wait inside",
+    "hours": "08:00-02:00"
+  },
+  {
+    "name": "Of All Places Specialty Market",
+    "lat": 37.8915393,
+    "lon": -122.2788989,
+    "type": "convenience",
+    "offers": "safe wait inside",
+    "hours": "08:00-02:00"
+  },
+  {
+    "name": "Wood Salon",
+    "lat": 37.861915,
+    "lon": -122.253413,
+    "type": "hairdresser",
+    "offers": "call a friend",
+    "hours": "08:00-02:00"
+  },
+  {
+    "name": "Vanessa's Bistro",
+    "lat": 37.8913544,
+    "lon": -122.2822119,
+    "type": "restaurant",
+    "offers": "safe wait inside",
+    "hours": "08:00-02:00"
+  },
+  {
+    "name": "Bing Wong Cleaners",
+    "lat": 37.8818387,
+    "lon": -122.269737,
+    "type": "laundry",
+    "offers": "free water",
+    "hours": "08:00-02:00"
+  },
+  {
+    "name": "Flamingo Cleaners",
+    "lat": 37.8720836,
+    "lon": -122.2729011,
+    "type": "dry_cleaning",
+    "offers": "safe wait inside",
+    "hours": "08:00-02:00"
+  },
+  {
+    "name": "Fast Imaging Center",
+    "lat": 37.871765,
+    "lon": -122.2701302,
+    "type": "copyshop",
+    "offers": "call a friend",
+    "hours": "08:00-02:00"
+  },
+  {
+    "name": "Signal",
+    "lat": 37.8703052,
+    "lon": -122.2670407,
+    "type": "cafe",
+    "offers": "walk-with-staff on request",
+    "hours": "08:00-02:00"
+  },
+  {
+    "name": "Narwhal Urban Village",
+    "lat": 37.8505318,
+    "lon": -122.278806,
+    "type": "restaurant",
+    "offers": "walk-with-staff on request",
+    "hours": "08:00-02:00"
+  }
+]
